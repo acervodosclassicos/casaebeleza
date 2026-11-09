@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
 import {
   collection,
+  addDoc,
   doc,
   getDocs,
   getDoc,
@@ -79,6 +80,7 @@ interface StoreContextType {
   // Reviews
   getProductReviews: (productId: string) => Promise<Review[]>;
   getAllReviews: () => Promise<Review[]>;
+  getPublishedReviews: () => Promise<Review[]>;
   submitProductReview: (review: Omit<Review, 'id' | 'status' | 'createdAt'>) => Promise<void>;
   updateReviewStatus: (reviewId: string, status: 'approved' | 'rejected', reply?: string) => Promise<void>;
   // Products Admin CRUD
@@ -88,6 +90,8 @@ interface StoreContextType {
   saveBanner: (banner: Banner) => Promise<void>;
   deleteBanner: (bannerId: string) => Promise<void>;
   updateSettings: (newSettings: Partial<StoreSettings>) => Promise<void>;
+  // Newsletter
+  subscribeNewsletter: (email: string) => Promise<void>;
   // Contact
   submitContact: (name: string, email: string, message: string, phone?: string, subject?: string) => Promise<void>;
   getContactMessages: () => Promise<ContactMessage[]>;
@@ -304,51 +308,9 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
   const applyCouponCode = (code: string) => {
     const clean = code.trim().toUpperCase();
-    if (!clean) {
-      return { success: false, message: 'Digite um código de cupom válido.' };
-    }
-
-    // Known coupons
-    let coupon: Coupon | null = null;
-    if (clean === 'BEMVINDA10') {
-      coupon = {
-        id: 'c-bemvinda',
-        code: 'BEMVINDA10',
-        discountType: 'percentage',
-        value: 10,
-        minPurchase: 0,
-        active: true,
-      };
-    } else if (clean === 'PRIMEIRACOMPRA') {
-      coupon = {
-        id: 'c-primeira',
-        code: 'PRIMEIRACOMPRA',
-        discountType: 'fixed',
-        value: 15,
-        minPurchase: 100,
-        active: true,
-      };
-    } else if (clean === 'FRETEGRATIS') {
-      coupon = {
-        id: 'c-frete',
-        code: 'FRETEGRATIS',
-        discountType: 'fixed',
-        value: 19.9,
-        minPurchase: 99,
-        active: true,
-      };
-    } else {
-      return { success: false, message: 'Cupom inválido ou não encontrado.' };
-    }
-
-    const validation = validateCoupon(coupon, cartTotals.subtotal);
-    if (!validation.valid) {
-      return { success: false, message: validation.message };
-    }
-
-    setAppliedCoupon(coupon);
-    showToast(validation.message, 'success');
-    return { success: true, message: validation.message };
+    if (!clean) return { success: false, message: 'Digite um código de cupom válido.' };
+    // Discounts must come from a real, active coupon configured in the database.
+    return { success: false, message: 'Este cupom não está cadastrado ou não está ativo.' };
   };
 
   const removeCoupon = () => {
@@ -416,10 +378,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       },
       status: 'aguardando_pagamento',
       paymentMethod: orderData.paymentMethod || 'Link Externo Seguro',
-      paymentExternalLink:
-        orderData.paymentExternalLink ||
-        cart.find((i) => i.externalPaymentLink)?.externalPaymentLink ||
-        'https://mpago.la/casabeleza-express',
+      paymentExternalLink: orderData.paymentExternalLink || '',
       externalReference: orderNumber,
       trackingCode: '',
       notes: '',
@@ -427,9 +386,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       updatedAt: new Date().toISOString(),
     };
 
-    // Save to memory cache immediately
-    setRecentOrders((prev) => [newOrder, ...prev]);
-
+    // Persistência é obrigatória: não confirmar pedido que só ficou na memória do navegador.
     try {
       await setDoc(doc(db, 'orders', orderId), {
         ...newOrder,
@@ -437,10 +394,11 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         updatedAt: serverTimestamp(),
       });
     } catch (err) {
-      console.warn('Could not save order to Firestore, saving in local cache:', err);
+      console.error('Could not persist order in Firestore:', err);
+      throw new Error('Não foi possível registrar seu pedido. Confira a conexão e tente novamente.');
     }
 
-    // Clear cart after checkout
+    setRecentOrders((prev) => [newOrder, ...prev]);
     clearCart();
     return newOrder;
   };
@@ -552,6 +510,19 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     }
   };
 
+  const getPublishedReviews = async (): Promise<Review[]> => {
+    try {
+      const publishedQuery = query(collection(db, 'reviews'), where('status', '==', 'approved'));
+      const snap = await getDocs(publishedQuery);
+      const list: Review[] = [];
+      snap.forEach((d) => list.push({ id: d.id, ...(d.data() as Omit<Review, 'id'>) }));
+      return list.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    } catch (err) {
+      console.warn('Could not load published reviews:', err);
+      return [];
+    }
+  };
+
   const submitProductReview = async (review: Omit<Review, 'id' | 'status' | 'createdAt'>) => {
     const reviewId = `rev_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`;
     try {
@@ -585,10 +556,13 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const saveProduct = async (prod: Product) => {
     try {
       const prodRef = doc(db, 'products', prod.id);
-      await setDoc(prodRef, {
-        ...prod,
-        updatedAt: serverTimestamp(),
-      });
+      if (!auth.currentUser || !isAdmin) {
+        throw new Error('Você precisa estar conectado como administrador para salvar anúncios.');
+      }
+      const productData = Object.fromEntries(
+        Object.entries({ ...prod, updatedAt: serverTimestamp() }).filter(([, value]) => value !== undefined)
+      );
+      await setDoc(prodRef, productData);
       setProducts((prev) => {
         const idx = prev.findIndex((p) => p.id === prod.id);
         if (idx > -1) {
@@ -599,8 +573,14 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         return [prod, ...prev];
       });
       showToast('Produto salvo com sucesso!', 'success');
-    } catch (err) {
-      handleFirestoreError(err, OperationType.WRITE, `products/${prod.id}`);
+    } catch (err: any) {
+      console.error('Firestore product save failed:', err);
+      const message = err?.code === 'permission-denied'
+        ? 'O Firebase bloqueou o salvamento. Confirme se esta conta tem permissão de administrador e publique as regras do Firestore.'
+        : err?.code === 'unavailable'
+          ? 'Banco de dados indisponível. Verifique sua conexão e tente novamente.'
+          : err?.message || 'Não foi possível salvar o anúncio.';
+      throw new Error(message);
     }
   };
 
@@ -652,6 +632,18 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     } catch (err) {
       handleFirestoreError(err, OperationType.WRITE, 'settings/store_config');
     }
+  };
+
+  const subscribeNewsletter = async (email: string) => {
+    const normalizedEmail = email.trim().toLowerCase();
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizedEmail)) {
+      throw new Error('Informe um e-mail válido.');
+    }
+    await addDoc(collection(db, 'newsletter'), {
+      email: normalizedEmail,
+      consent: true,
+      createdAt: serverTimestamp(),
+    });
   };
 
   const submitContact = async (
@@ -748,6 +740,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         updateTrackingCode,
         getProductReviews,
         getAllReviews,
+        getPublishedReviews,
         submitProductReview,
         updateReviewStatus,
         saveProduct,
@@ -755,6 +748,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         saveBanner,
         deleteBanner,
         updateSettings,
+        subscribeNewsletter,
         submitContact,
         getContactMessages,
         seedCatalog,

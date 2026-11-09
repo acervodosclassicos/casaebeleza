@@ -51,7 +51,7 @@ export const ContactView: React.FC = () => {
           Central de Atendimento
         </h1>
         <p className="text-xs text-zinc-500">
-          Tire dúvidas sobre produtos, entregas ou trocas. Nossa equipe responde em até 24 horas úteis.
+          Tire dúvidas sobre produtos, entregas ou trocas. Preencha o formulário e informe um e-mail válido para receber o retorno.
         </p>
       </div>
 
@@ -62,48 +62,39 @@ export const ContactView: React.FC = () => {
             <h3 className="font-extrabold text-sm text-zinc-900">Canais Oficiais</h3>
 
             <div className="space-y-3 text-xs">
-              <a
-                href={`https://wa.me/${settings.whatsappNumber}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center gap-3 p-3.5 bg-emerald-50 text-emerald-900 border border-emerald-200 rounded-2xl hover:bg-emerald-100 transition-colors"
-              >
-                <div className="w-10 h-10 rounded-xl bg-emerald-500 text-white flex items-center justify-center shrink-0">
-                  <MessageCircle className="w-5 h-5" />
-                </div>
-                <div>
-                  <h4 className="font-bold text-emerald-950">Atendimento WhatsApp</h4>
-                  <p className="text-[11px] text-emerald-700">Conversar agora em tempo real</p>
-                </div>
-              </a>
+              {settings.whatsappNumber && (
+                <a
+                  href={`https://wa.me/${settings.whatsappNumber.replace(/\D/g, '')}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-3 p-3.5 bg-emerald-50 text-emerald-900 border border-emerald-200 rounded-2xl hover:bg-emerald-100 transition-colors"
+                >
+                  <div className="w-10 h-10 rounded-xl bg-emerald-500 text-white flex items-center justify-center shrink-0"><MessageCircle className="w-5 h-5" /></div>
+                  <div><h4 className="font-bold text-emerald-950">Atendimento WhatsApp</h4><p className="text-[11px] text-emerald-700">Conversar pelo WhatsApp</p></div>
+                </a>
+              )}
 
-              <div className="flex items-center gap-3 p-3.5 bg-zinc-50 rounded-2xl border border-zinc-100">
-                <div className="w-10 h-10 rounded-xl bg-pink-100 text-[#E6007A] flex items-center justify-center shrink-0">
-                  <Mail className="w-5 h-5" />
+              {settings.contactEmail && (
+                <div className="flex items-center gap-3 p-3.5 bg-zinc-50 rounded-2xl border border-zinc-100">
+                  <div className="w-10 h-10 rounded-xl bg-pink-100 text-[#E6007A] flex items-center justify-center shrink-0"><Mail className="w-5 h-5" /></div>
+                  <div><h4 className="font-bold text-zinc-900">E-mail de Suporte</h4><p className="text-[11px] text-zinc-500">{settings.contactEmail}</p></div>
                 </div>
-                <div>
-                  <h4 className="font-bold text-zinc-900">E-mail de Suporte</h4>
-                  <p className="text-[11px] text-zinc-500">{settings.contactEmail}</p>
-                </div>
-              </div>
+              )}
 
-              <div className="flex items-center gap-3 p-3.5 bg-zinc-50 rounded-2xl border border-zinc-100">
-                <div className="w-10 h-10 rounded-xl bg-pink-100 text-[#E6007A] flex items-center justify-center shrink-0">
-                  <Phone className="w-5 h-5" />
+              {settings.contactPhone && (
+                <div className="flex items-center gap-3 p-3.5 bg-zinc-50 rounded-2xl border border-zinc-100">
+                  <div className="w-10 h-10 rounded-xl bg-pink-100 text-[#E6007A] flex items-center justify-center shrink-0"><Phone className="w-5 h-5" /></div>
+                  <div><h4 className="font-bold text-zinc-900">Telefone Direto</h4><p className="text-[11px] text-zinc-500">{settings.contactPhone}</p></div>
                 </div>
-                <div>
-                  <h4 className="font-bold text-zinc-900">Telefone Direto</h4>
-                  <p className="text-[11px] text-zinc-500">{settings.contactPhone}</p>
-                </div>
-              </div>
+              )}
 
               <div className="flex items-center gap-3 p-3.5 bg-zinc-50 rounded-2xl border border-zinc-100">
                 <div className="w-10 h-10 rounded-xl bg-pink-100 text-[#E6007A] flex items-center justify-center shrink-0">
                   <Clock className="w-5 h-5" />
                 </div>
                 <div>
-                  <h4 className="font-bold text-zinc-900">Horário de Atendimento</h4>
-                  <p className="text-[11px] text-zinc-500">Segunda a Sexta, das 09h às 18h</p>
+                  <h4 className="font-bold text-zinc-900">Atendimento</h4>
+                  <p className="text-[11px] text-zinc-500">Envie sua mensagem pelo formulário desta página.</p>
                 </div>
               </div>
             </div>

@@ -9,6 +9,8 @@ import {
   ExternalLink,
   ChevronRight,
   ShoppingBag,
+  Mail,
+  Lock,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useStore } from '../context/StoreContext';
@@ -20,12 +22,59 @@ interface CustomerAccountViewProps {
 }
 
 export const CustomerAccountView: React.FC<CustomerAccountViewProps> = ({ onNavigate }) => {
-  const { user, userProfile, isAdmin, logout, loginGoogle } = useAuth();
-  const { getUserOrders, wishlist, products, addToCart, toggleWishlist } = useStore();
+  const { user, userProfile, isAdmin, logout, loginGoogle, loginEmail, registerEmail, resetPassword, loading: authLoading } = useAuth();
+  const { getUserOrders, wishlist, products, addToCart, toggleWishlist, showToast } = useStore();
 
   const [activeTab, setActiveTab] = useState<'pedidos' | 'favoritos' | 'perfil'>('pedidos');
   const [orders, setOrders] = useState<Order[]>([]);
   const [loadingOrders, setLoadingOrders] = useState(false);
+  const [authMode, setAuthMode] = useState<'login' | 'register'>('login');
+  const [authName, setAuthName] = useState('');
+  const [authEmail, setAuthEmail] = useState('');
+  const [authPassword, setAuthPassword] = useState('');
+  const [authError, setAuthError] = useState('');
+  const [authBusy, setAuthBusy] = useState(false);
+
+  const handleEmailAuth = async (event: React.FormEvent) => {
+    event.preventDefault();
+    setAuthError('');
+    if (authPassword.length < 6) {
+      setAuthError('A senha precisa ter pelo menos 6 caracteres.');
+      return;
+    }
+    setAuthBusy(true);
+    try {
+      if (authMode === 'register') {
+        if (!authName.trim()) { setAuthError('Informe seu nome.'); return; }
+        await registerEmail(authName, authEmail, authPassword);
+        showToast('Conta criada. Enviamos um link de verificação para seu e-mail.', 'success');
+      } else {
+        await loginEmail(authEmail, authPassword);
+      }
+    } catch (error: any) {
+      const code = error?.code || '';
+      const messages: Record<string, string> = {
+        'auth/email-already-in-use': 'Este e-mail já possui cadastro. Faça login.',
+        'auth/invalid-email': 'Informe um e-mail válido.',
+        'auth/invalid-credential': 'E-mail ou senha incorretos.',
+        'auth/user-not-found': 'Não encontramos uma conta com esse e-mail.',
+        'auth/wrong-password': 'Senha incorreta.',
+        'auth/weak-password': 'A senha precisa ter pelo menos 6 caracteres.',
+        'auth/too-many-requests': 'Muitas tentativas. Aguarde um pouco e tente novamente.',
+        'auth/operation-not-allowed': 'O login por e-mail ainda não está habilitado no Firebase.',
+      };
+      setAuthError(messages[code] || error?.message || 'Não foi possível autenticar. Tente novamente.');
+    } finally { setAuthBusy(false); }
+  };
+
+  const handlePasswordReset = async () => {
+    setAuthError('');
+    if (!authEmail.trim()) { setAuthError('Digite seu e-mail para receber o link de redefinição.'); return; }
+    try {
+      await resetPassword(authEmail);
+      setAuthError('Enviamos um link de redefinição para seu e-mail.');
+    } catch (error: any) { setAuthError(error?.message || 'Não foi possível enviar o e-mail de redefinição.'); }
+  };
 
   useEffect(() => {
     if (user) {
@@ -39,20 +88,33 @@ export const CustomerAccountView: React.FC<CustomerAccountViewProps> = ({ onNavi
 
   if (!user) {
     return (
-      <div className="max-w-md mx-auto px-4 py-20 text-center space-y-4">
-        <div className="w-16 h-16 rounded-full bg-pink-50 text-[#E6007A] flex items-center justify-center mx-auto">
-          <User className="w-8 h-8" />
+      <div className="max-w-md mx-auto px-4 py-12 sm:py-16">
+        <div className="bg-white border border-pink-100 rounded-3xl shadow-xl p-6 sm:p-8 space-y-5">
+          <div className="w-16 h-16 rounded-2xl bg-pink-50 text-[#E6007A] flex items-center justify-center mx-auto"><User className="w-8 h-8" /></div>
+          <div className="text-center space-y-1">
+            <h2 className="text-2xl font-black text-zinc-900">Acesse sua conta</h2>
+            <p className="text-sm text-zinc-500">Entre para acompanhar seus pedidos e salvar seus favoritos.</p>
+          </div>
+          <div className="grid grid-cols-2 gap-2 p-1 bg-zinc-100 rounded-xl">
+            <button type="button" onClick={() => { setAuthMode('login'); setAuthError(''); }} className={`py-2.5 rounded-lg text-sm font-bold ${authMode === 'login' ? 'bg-white text-[#E6007A] shadow-sm' : 'text-zinc-500'}`}>Entrar</button>
+            <button type="button" onClick={() => { setAuthMode('register'); setAuthError(''); }} className={`py-2.5 rounded-lg text-sm font-bold ${authMode === 'register' ? 'bg-white text-[#E6007A] shadow-sm' : 'text-zinc-500'}`}>Criar conta</button>
+          </div>
+          <form onSubmit={handleEmailAuth} className="space-y-3">
+            {authMode === 'register' && <label className="block text-sm font-semibold text-zinc-700">Nome completo<input value={authName} onChange={(e) => setAuthName(e.target.value)} autoComplete="name" required className="mt-1 w-full rounded-xl border border-zinc-200 px-4 py-3 outline-none focus:border-[#E6007A] focus:ring-2 focus:ring-pink-100" placeholder="Seu nome" /></label>}
+            <label className="block text-sm font-semibold text-zinc-700">E-mail
+              <span className="relative block mt-1"><Mail className="absolute left-3 top-3.5 w-4 h-4 text-zinc-400" /><input type="email" value={authEmail} onChange={(e) => setAuthEmail(e.target.value)} autoComplete="email" required className="w-full rounded-xl border border-zinc-200 pl-10 pr-4 py-3 outline-none focus:border-[#E6007A] focus:ring-2 focus:ring-pink-100" placeholder="voce@email.com" /></span>
+            </label>
+            <label className="block text-sm font-semibold text-zinc-700">Senha
+              <span className="relative block mt-1"><Lock className="absolute left-3 top-3.5 w-4 h-4 text-zinc-400" /><input type="password" value={authPassword} onChange={(e) => setAuthPassword(e.target.value)} autoComplete={authMode === 'login' ? 'current-password' : 'new-password'} required minLength={6} className="w-full rounded-xl border border-zinc-200 pl-10 pr-4 py-3 outline-none focus:border-[#E6007A] focus:ring-2 focus:ring-pink-100" placeholder="Mínimo de 6 caracteres" /></span>
+            </label>
+            {authMode === 'login' && <button type="button" onClick={handlePasswordReset} className="text-xs font-bold text-[#E6007A] hover:underline">Esqueci minha senha</button>}
+            {authError && <p role="alert" className="rounded-xl bg-pink-50 border border-pink-100 p-3 text-xs text-pink-800">{authError}</p>}
+            <button type="submit" disabled={authBusy || authLoading} className="w-full py-3.5 bg-[#E6007A] hover:bg-[#D0006E] disabled:opacity-60 text-white rounded-xl text-sm font-extrabold shadow-md">{authBusy || authLoading ? 'Aguarde...' : authMode === 'login' ? 'Entrar com e-mail' : 'Criar minha conta'}</button>
+          </form>
+          <div className="flex items-center gap-3 text-xs text-zinc-400"><span className="h-px bg-zinc-200 flex-1" />ou continue com<span className="h-px bg-zinc-200 flex-1" /></div>
+          <button onClick={async () => { setAuthError(''); try { await loginGoogle(); } catch (error: any) { setAuthError(error?.message || 'Não foi possível entrar com Google.'); } }} className="w-full py-3 border border-zinc-200 hover:bg-zinc-50 text-zinc-800 rounded-xl text-sm font-bold transition-colors">Continuar com Google</button>
+          <p className="text-[11px] text-center text-zinc-400">O acesso por e-mail depende de o provedor E-mail/senha estar ativado no Firebase Authentication.</p>
         </div>
-        <h2 className="text-xl font-bold text-zinc-900">Acesse sua Conta</h2>
-        <p className="text-xs text-zinc-500">
-          Faça login para acompanhar o status dos seus pedidos e gerenciar seus produtos favoritos.
-        </p>
-        <button
-          onClick={loginGoogle}
-          className="w-full py-3 bg-[#E6007A] hover:bg-[#D0006E] text-white rounded-xl text-xs font-bold transition-all shadow-md"
-        >
-          Entrar com Google
-        </button>
       </div>
     );
   }

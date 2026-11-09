@@ -29,8 +29,8 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
               <Truck className="w-6 h-6" />
             </div>
             <div>
-              <h4 className="text-white font-bold text-sm">Envio Rápido &amp; Seguro</h4>
-              <p className="text-xs text-zinc-400">Rastreamento direto e entrega garantida</p>
+              <h4 className="text-white font-bold text-sm">Frete grátis</h4>
+              <p className="text-xs text-zinc-400">Em compras a partir de R$ 49,99</p>
             </div>
           </div>
 
@@ -39,8 +39,8 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
               <CreditCard className="w-6 h-6" />
             </div>
             <div>
-              <h4 className="text-white font-bold text-sm">Até 6x Sem Juros</h4>
-              <p className="text-xs text-zinc-400">Parcelamento flexível no cartão</p>
+              <h4 className="text-white font-bold text-sm">Pagamento por gateway</h4>
+              <p className="text-xs text-zinc-400">As opções disponíveis são informadas no ambiente de pagamento</p>
             </div>
           </div>
 
@@ -49,8 +49,8 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
               <ShieldCheck className="w-6 h-6" />
             </div>
             <div>
-              <h4 className="text-white font-bold text-sm">Compra 100% Protegida</h4>
-              <p className="text-xs text-zinc-400">Ambiente blindado com criptografia</p>
+              <h4 className="text-white font-bold text-sm">Pagamento em ambiente externo</h4>
+              <p className="text-xs text-zinc-400">Confira os dados antes de confirmar a compra</p>
             </div>
           </div>
 

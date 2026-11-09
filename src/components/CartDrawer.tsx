@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import {
   X,
   Trash2,
@@ -7,7 +7,6 @@ import {
   ShoppingBag,
   ArrowRight,
   Sparkles,
-  Tag,
   ShieldCheck,
 } from 'lucide-react';
 import { useStore } from '../context/StoreContext';
@@ -29,27 +28,10 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
     setIsCartOpen,
     updateQuantity,
     removeFromCart,
-    appliedCoupon,
-    applyCouponCode,
-    removeCoupon,
   } = useStore();
 
-  const [couponInput, setCouponInput] = useState('');
-  const [couponError, setCouponError] = useState('');
 
   if (!isCartOpen) return null;
-
-  const handleApplyCoupon = (e: React.FormEvent) => {
-    e.preventDefault();
-    setCouponError('');
-    if (!couponInput.trim()) return;
-    const res = applyCouponCode(couponInput.trim());
-    if (!res.success) {
-      setCouponError(res.message);
-    } else {
-      setCouponInput('');
-    }
-  };
 
   return (
     <div className="fixed inset-0 z-50 overflow-hidden">
@@ -190,39 +172,6 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
           {/* Drawer Footer with Coupon & Checkout */}
           {cart.length > 0 && (
             <div className="p-5 border-t border-zinc-100 bg-zinc-50/70 space-y-3">
-              {/* Coupon Form */}
-              {appliedCoupon ? (
-                <div className="flex items-center justify-between p-2.5 bg-emerald-50 border border-emerald-200 rounded-xl text-xs">
-                  <div className="flex items-center gap-1.5 text-emerald-800 font-semibold">
-                    <Tag className="w-3.5 h-3.5" />
-                    <span>Cupom: <strong>{appliedCoupon.code}</strong> (-{formatBRL(cartTotals.discount)})</span>
-                  </div>
-                  <button
-                    onClick={removeCoupon}
-                    className="text-xs text-red-600 hover:underline font-bold"
-                  >
-                    Remover
-                  </button>
-                </div>
-              ) : (
-                <form onSubmit={handleApplyCoupon} className="flex gap-2">
-                  <input
-                    type="text"
-                    placeholder="Possui cupom? Ex: BEMVINDA10"
-                    value={couponInput}
-                    onChange={(e) => setCouponInput(e.target.value)}
-                    className="flex-1 bg-white border border-zinc-200 rounded-xl px-3 py-2 text-xs uppercase text-zinc-800 placeholder-zinc-400 focus:outline-hidden focus:border-[#E6007A]"
-                  />
-                  <button
-                    type="submit"
-                    className="px-4 py-2 bg-zinc-900 hover:bg-[#E6007A] text-white rounded-xl text-xs font-bold transition-colors"
-                  >
-                    Aplicar
-                  </button>
-                </form>
-              )}
-              {couponError && <p className="text-[11px] text-red-600 font-medium">{couponError}</p>}
-
               {/* Totals Breakdown */}
               <div className="space-y-1.5 text-xs text-zinc-600 pt-1">
                 <div className="flex justify-between">

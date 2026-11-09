@@ -28,6 +28,8 @@ import { useAuth } from '../context/AuthContext';
 import { useStore } from '../context/StoreContext';
 import { formatBRL, getOrderStatusInfo } from '../utils/shop-logic';
 import { Product, Order, Banner, StoreSettings, Review, Coupon } from '../types';
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { storage } from '../lib/firebase';
 
 export const AdminView: React.FC = () => {
   const { user, isAdmin, loginGoogle } = useAuth();
@@ -61,6 +63,7 @@ export const AdminView: React.FC = () => {
   // Product Editing / Creation modal
   const [editingProduct, setEditingProduct] = useState<Partial<Product> | null>(null);
   const [isProductModalOpen, setIsProductModalOpen] = useState(false);
+  const [isUploadingImages, setIsUploadingImages] = useState(false);
 
   // Order Details Modal
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
@@ -160,13 +163,13 @@ export const AdminView: React.FC = () => {
       costPrice: 0,
       stock: 10,
       sku: `CBE-${Math.floor(100 + Math.random() * 900)}`,
-      thumbnail: 'https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?auto=format&fit=crop&w=800&q=80',
-      images: ['https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?auto=format&fit=crop&w=800&q=80'],
+      thumbnail: '',
+      images: [],
       active: true,
       featured: false,
       flashDeal: false,
       isNew: true,
-      externalPaymentLink: 'https://mpago.la/casabeleza-express',
+      externalPaymentLink: '',
     });
     setIsProductModalOpen(true);
   };
@@ -201,7 +204,7 @@ export const AdminView: React.FC = () => {
       barcode: editingProduct.barcode,
       weight: Number(editingProduct.weight) || 0.2,
       thumbnail: editingProduct.thumbnail || '',
-      images: editingProduct.images && editingProduct.images.length > 0 ? editingProduct.images : [editingProduct.thumbnail || ''],
+      images: editingProduct.images && editingProduct.images.length > 0 ? editingProduct.images : (editingProduct.thumbnail ? [editingProduct.thumbnail] : []),
       featured: Boolean(editingProduct.featured),
       flashDeal: Boolean(editingProduct.flashDeal),
       isNew: Boolean(editingProduct.isNew),
@@ -211,9 +214,50 @@ export const AdminView: React.FC = () => {
       updatedAt: new Date().toISOString(),
     };
 
-    await saveProduct(finalProduct);
-    setIsProductModalOpen(false);
-    setEditingProduct(null);
+    try {
+      await saveProduct(finalProduct);
+      setIsProductModalOpen(false);
+      setEditingProduct(null);
+    } catch (error: any) {
+      console.error('Erro ao salvar anúncio:', error);
+      showToast(error?.message || 'Não foi possível salvar o anúncio. Verifique as permissões do Firebase.', 'error');
+    }
+  };
+
+  const handleProductImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(event.target.files || []);
+    event.target.value = '';
+    if (!files.length || !editingProduct) return;
+    const invalid = files.find((file) => !file.type.startsWith('image/'));
+    if (invalid) { showToast('Selecione somente arquivos de imagem.', 'error'); return; }
+    const oversized = files.find((file) => file.size > 5 * 1024 * 1024);
+    if (oversized) { showToast('Cada imagem deve ter no máximo 5 MB.', 'error'); return; }
+    setIsUploadingImages(true);
+    try {
+      const urls = await Promise.all(files.map(async (file) => {
+        const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, '-');
+        const imageRef = ref(storage, `products/${editingProduct.id || 'new'}/${Date.now()}-${safeName}`);
+        const result = await uploadBytes(imageRef, file, { contentType: file.type });
+        return await getDownloadURL(result.ref);
+      }));
+      setEditingProduct((current) => {
+        if (!current) return current;
+        const images = [...(current.images || []), ...urls];
+        return { ...current, images, thumbnail: current.thumbnail || images[0] };
+      });
+      showToast(`${urls.length} imagem(ns) enviada(s) com sucesso.`, 'success');
+    } catch (error: any) {
+      console.error('Falha no upload de imagem:', error);
+      showToast(error?.message || 'Falha ao enviar imagem. Verifique as regras do Firebase Storage.', 'error');
+    } finally { setIsUploadingImages(false); }
+  };
+
+  const handleRemoveProductImage = (url: string) => {
+    setEditingProduct((current) => {
+      if (!current) return current;
+      const images = (current.images || []).filter((image) => image !== url);
+      return { ...current, images, thumbnail: current.thumbnail === url ? (images[0] || '') : current.thumbnail };
+    });
   };
 
   const handleDuplicateProduct = async (p: Product) => {
@@ -963,14 +1007,27 @@ export const AdminView: React.FC = () => {
                 </span>
               </div>
 
-              <div>
-                <label className="block font-semibold text-zinc-700 mb-1">URL da Foto Principal</label>
-                <input
-                  type="url"
-                  value={editingProduct.thumbnail || ''}
-                  onChange={(e) => setEditingProduct({ ...editingProduct, thumbnail: e.target.value })}
-                  className="w-full bg-zinc-50 border border-zinc-200 rounded-xl p-2.5 text-zinc-900"
-                />
+              <div className="rounded-2xl border border-dashed border-pink-300 bg-pink-50/40 p-4 space-y-3">
+                <div>
+                  <label className="block font-bold text-zinc-800 mb-1">Fotos do anúncio</label>
+                  <p className="text-[11px] text-zinc-500">Envie imagens JPG, PNG, WEBP ou GIF de até 5 MB cada. A primeira imagem será usada como foto principal.</p>
+                </div>
+                <input type="file" accept="image/jpeg,image/png,image/webp,image/gif" multiple onChange={handleProductImageUpload} disabled={isUploadingImages} className="block w-full text-xs text-zinc-600 file:mr-3 file:rounded-lg file:border-0 file:bg-[#E6007A] file:px-4 file:py-2 file:font-bold file:text-white hover:file:bg-[#D0006E] disabled:opacity-50" />
+                {isUploadingImages && <p className="text-xs font-bold text-[#E6007A] animate-pulse">Enviando imagens para o armazenamento seguro...</p>}
+                {(editingProduct.images || []).length > 0 && (
+                  <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
+                    {(editingProduct.images || []).map((url, index) => (
+                      <div key={`${url}-${index}`} className="relative group aspect-square rounded-xl overflow-hidden border border-zinc-200 bg-white">
+                        <img src={url} alt={`Imagem ${index + 1}`} className="w-full h-full object-cover" />
+                        {index === 0 && <span className="absolute bottom-1 left-1 rounded bg-[#E6007A] px-1.5 py-0.5 text-[9px] font-bold text-white">Principal</span>}
+                        <button type="button" onClick={() => handleRemoveProductImage(url)} className="absolute top-1 right-1 rounded-full bg-black/70 text-white w-6 h-6 text-sm leading-none" aria-label="Remover imagem">×</button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                <label className="block text-[11px] font-semibold text-zinc-600">Ou informe uma URL de imagem
+                  <input type="url" value={editingProduct.thumbnail || ''} onChange={(e) => setEditingProduct({ ...editingProduct, thumbnail: e.target.value, images: e.target.value ? [e.target.value, ...(editingProduct.images || []).filter((url) => url !== e.target.value)] : (editingProduct.images || []) })} placeholder="https://..." className="mt-1 w-full bg-white border border-zinc-200 rounded-xl p-2.5 text-zinc-900" />
+                </label>
               </div>
 
               <div>
@@ -1033,7 +1090,8 @@ export const AdminView: React.FC = () => {
                 </button>
                 <button
                   type="submit"
-                  className="px-6 py-2.5 bg-[#E6007A] text-white rounded-xl font-bold shadow-md hover:bg-[#D0006E]"
+                  disabled={isUploadingImages}
+                  className="px-6 py-2.5 disabled:opacity-50 bg-[#E6007A] text-white rounded-xl font-bold shadow-md hover:bg-[#D0006E]"
                 >
                   Salvar Produto
                 </button>

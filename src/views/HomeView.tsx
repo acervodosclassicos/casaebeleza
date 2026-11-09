@@ -15,40 +15,25 @@ import {
   Flame,
   Award,
   Clock,
-  Copy,
-  Check,
 } from 'lucide-react';
 import { useStore } from '../context/StoreContext';
 import { ProductCard } from '../components/ProductCard';
 import { formatBRL } from '../utils/shop-logic';
+import { Review } from '../types';
 
 interface HomeViewProps {
   onNavigate: (view: string, param?: string) => void;
 }
 
 export const HomeView: React.FC<HomeViewProps> = ({ onNavigate }) => {
-  const { products, categories, banners, showToast } = useStore();
+  const { products, categories, banners, showToast, subscribeNewsletter, getPublishedReviews } = useStore();
 
   const [currentBannerIndex, setCurrentBannerIndex] = useState(0);
   const [newsletterEmail, setNewsletterEmail] = useState('');
-  const [newsletterConsent, setNewsletterConsent] = useState(true);
+  const [newsletterConsent, setNewsletterConsent] = useState(false);
   const [newsletterSubmitted, setNewsletterSubmitted] = useState(false);
-  const [copiedCoupon, setCopiedCoupon] = useState(false);
+  const [publishedReviews, setPublishedReviews] = useState<Review[]>([]);
 
-  // Live Countdown timer for Flash Deals (Ofertas Relâmpago)
-  const [timeLeft, setTimeLeft] = useState({ hours: 11, minutes: 42, seconds: 18 });
-
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setTimeLeft((prev) => {
-        if (prev.seconds > 0) return { ...prev, seconds: prev.seconds - 1 };
-        if (prev.minutes > 0) return { ...prev, minutes: 59, seconds: 59 };
-        if (prev.hours > 0) return { hours: prev.hours - 1, minutes: 59, seconds: 59 };
-        return { hours: 23, minutes: 59, seconds: 59 };
-      });
-    }, 1000);
-    return () => clearInterval(timer);
-  }, []);
 
   // Auto advance banner carousel
   const activeBanners = banners.filter((b) => b.active);
@@ -61,6 +46,11 @@ export const HomeView: React.FC<HomeViewProps> = ({ onNavigate }) => {
   }, [activeBanners.length]);
 
   const currentBanner = activeBanners[currentBannerIndex] || activeBanners[0];
+
+  useEffect(() => {
+    getPublishedReviews().then(setPublishedReviews);
+  }, []);
+
 
   // Curated product sections
   const flashDealProducts = products.filter((p) => p.active && p.flashDeal);
@@ -81,29 +71,25 @@ export const HomeView: React.FC<HomeViewProps> = ({ onNavigate }) => {
         p.category === 'casa-decoracao' ||
         p.category === 'utilidades-lar')
   );
-  const recommendedProducts = products.filter(
-    (p) => p.active && (p.rating && p.rating >= 4.7)
-  );
+  const recommendedProducts = products.filter((p) => p.active && p.featured);
 
-  const handleNewsletterSubmit = (e: React.FormEvent) => {
+  const handleNewsletterSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newsletterEmail || !newsletterEmail.includes('@')) {
       showToast('Por favor, informe um e-mail válido.', 'error');
       return;
     }
     if (!newsletterConsent) {
-      showToast('Por favor, confirme o consentimento para receber novidades.', 'error');
+      showToast('Confirme o consentimento para receber novidades.', 'error');
       return;
     }
-    setNewsletterSubmitted(true);
-    showToast('Inscrição confirmada! Use o cupom BEMVINDA10 na sua compra.', 'success');
-  };
-
-  const handleCopyCoupon = () => {
-    navigator.clipboard.writeText('BEMVINDA10');
-    setCopiedCoupon(true);
-    showToast('Cupom BEMVINDA10 copiado!', 'success');
-    setTimeout(() => setCopiedCoupon(false), 2500);
+    try {
+      await subscribeNewsletter(newsletterEmail);
+      setNewsletterSubmitted(true);
+      showToast('Seu e-mail foi cadastrado para receber novidades.', 'success');
+    } catch (error: any) {
+      showToast(error?.message || 'Não foi possível cadastrar seu e-mail.', 'error');
+    }
   };
 
   return (
@@ -217,7 +203,7 @@ export const HomeView: React.FC<HomeViewProps> = ({ onNavigate }) => {
             </div>
             <div>
               <h4 className="text-xs font-black text-zinc-900 leading-tight">Frete Grátis Express</h4>
-              <p className="text-[11px] text-zinc-500">A partir de R$ 49,99 p/ todo Brasil</p>
+              <p className="text-[11px] text-zinc-500">Em compras a partir de R$ 49,99</p>
             </div>
           </div>
 
@@ -226,8 +212,8 @@ export const HomeView: React.FC<HomeViewProps> = ({ onNavigate }) => {
               <CreditCard className="w-5 h-5" />
             </div>
             <div>
-              <h4 className="text-xs font-black text-zinc-900 leading-tight">Até 6x Sem Juros</h4>
-              <p className="text-[11px] text-zinc-500">Ou 5% de desconto via PIX</p>
+              <h4 className="text-xs font-black text-zinc-900 leading-tight">Pagamento pelo gateway</h4>
+              <p className="text-[11px] text-zinc-500">Consulte as opções disponíveis no pagamento</p>
             </div>
           </div>
 
@@ -236,8 +222,8 @@ export const HomeView: React.FC<HomeViewProps> = ({ onNavigate }) => {
               <ShieldCheck className="w-5 h-5" />
             </div>
             <div>
-              <h4 className="text-xs font-black text-zinc-900 leading-tight">Compra 100% Segura</h4>
-              <p className="text-[11px] text-zinc-500">Dados protegidos com SSL</p>
+              <h4 className="text-xs font-black text-zinc-900 leading-tight">Pagamento em ambiente seguro</h4>
+              <p className="text-[11px] text-zinc-500">O pagamento é feito no gateway configurado</p>
             </div>
           </div>
 
@@ -314,7 +300,8 @@ export const HomeView: React.FC<HomeViewProps> = ({ onNavigate }) => {
         </div>
       </section>
 
-      {/* 3. SEÇÃO 3 — OFERTAS IMPERDÍVEIS COM ETIQUETAS PINK */}
+      {/* Ofertas com preço promocional configurado */}
+      {products.some((p) => p.active && (p.compareAtPrice || 0) > p.price) && (
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="p-6 sm:p-8 bg-gradient-to-r from-pink-50 via-white to-pink-50/50 rounded-3xl border border-pink-200/80 shadow-md">
           <div className="flex flex-col sm:flex-row sm:items-end justify-between mb-8 gap-4 pb-4 border-b border-pink-100">
@@ -324,10 +311,10 @@ export const HomeView: React.FC<HomeViewProps> = ({ onNavigate }) => {
                 <span>Super Preços</span>
               </div>
               <h2 className="text-2xl sm:text-3xl font-black text-zinc-900">
-                Ofertas Imperdíveis da Semana
+                Ofertas da Loja
               </h2>
               <p className="text-xs text-zinc-600 mt-1 font-medium">
-                Seleção com os maiores descontos reais da loja e condições especiais de parcelamento.
+                Produtos com preço promocional cadastrado pela loja.
               </p>
             </div>
             <button
@@ -352,125 +339,72 @@ export const HomeView: React.FC<HomeViewProps> = ({ onNavigate }) => {
           </div>
         </div>
       </section>
+      )}
 
-      {/* 4. SEÇÃO 4 — MAIS VENDIDOS DA LOJA COM RANKING */}
+      {/* Destaques escolhidos no painel administrativo */}
+      {bestSellers.length > 0 && (
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-end justify-between mb-8">
           <div>
             <div className="inline-flex items-center gap-1 text-xs font-black uppercase tracking-widest text-[#E6007A]">
               <Award className="w-3.5 h-3.5 text-[#E6007A]" />
-              <span>Favoritos Absolutos</span>
+              <span>Escolha da equipe</span>
             </div>
             <h2 className="text-2xl sm:text-3xl font-black text-zinc-900 mt-1">
-              Mais Vendidos do Mês
+              Destaques da Loja
             </h2>
             <p className="text-xs text-zinc-500 mt-1">
-              Os produtos mais bem avaliados e pedidos pelas nossas clientes.
+              Produtos selecionados pela equipe da loja.
             </p>
           </div>
           <button
             onClick={() => onNavigate('catalogo')}
             className="text-xs sm:text-sm font-bold text-[#E6007A] hover:underline flex items-center gap-1 shrink-0"
           >
-            <span>Ver ranking completo</span>
+            <span>Ver catálogo</span>
             <ArrowRight className="w-4 h-4" />
           </button>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          {(bestSellers.length > 0 ? bestSellers : products.slice(0, 4)).map((product, idx) => (
-            <div key={product.id} className="relative">
-              {/* Ranking badge */}
-              <div className="absolute -top-3 -left-2 z-20 w-8 h-8 rounded-full bg-zinc-900 text-amber-400 font-black text-xs flex items-center justify-center border-2 border-white shadow-md">
-                #{idx + 1}
-              </div>
-              <ProductCard
-                product={product}
-                onSelect={(id) => onNavigate('produto', id)}
-              />
-            </div>
+          {bestSellers.slice(0, 4).map((product) => (
+            <ProductCard key={product.id} product={product} onSelect={(id) => onNavigate('produto', id)} />
           ))}
         </div>
       </section>
+      )}
 
-      {/* 5. SEÇÃO 5 — OFERTAS RELÂMPAGO COM CRONÔMETRO AO VIVO & BARRA DE ESTOQUE */}
+      {/* Ofertas relâmpago cadastradas no painel */}
+      {flashDealProducts.length > 0 && (
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="bg-gradient-to-r from-zinc-950 via-zinc-900 to-zinc-950 rounded-3xl p-6 sm:p-10 text-white shadow-2xl relative overflow-hidden border border-zinc-800">
           <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6 pb-6 border-b border-zinc-800/80">
             <div>
               <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-amber-500/20 text-amber-400 border border-amber-500/40 rounded-full text-xs font-black uppercase tracking-wider mb-2">
                 <Zap className="w-3.5 h-3.5 fill-current text-amber-400" />
-                <span>Ofertas Limitadas</span>
+                <span>Ofertas Relâmpago</span>
               </div>
               <h2 className="text-2xl sm:text-3xl font-black text-white">
                 Ofertas Relâmpago Exclusivas
               </h2>
               <p className="text-xs text-zinc-400 mt-1 font-medium">
-                Estoque reservado com até 40% OFF. Quando o cronômetro zerar, os preços retornam ao valor original.
+                Produtos marcados como oferta relâmpago pela equipe da loja.
               </p>
             </div>
 
-            {/* Countdown Box */}
-            <div className="flex items-center gap-3 bg-zinc-900/90 p-3 rounded-2xl border border-zinc-800">
-              <span className="text-xs text-zinc-400 uppercase font-bold flex items-center gap-1">
-                <Clock className="w-3.5 h-3.5 text-amber-400" />
-                Termina em:
-              </span>
-              <div className="flex items-center gap-2 font-mono font-bold text-sm">
-                <div className="bg-zinc-950 px-3 py-2 rounded-xl text-center border border-zinc-800 min-w-[50px]">
-                  <span className="text-lg text-amber-400 font-black">
-                    {String(timeLeft.hours).padStart(2, '0')}
-                  </span>
-                  <span className="block text-[9px] text-zinc-500 font-sans font-normal uppercase">Horas</span>
-                </div>
-                <span className="text-amber-400 font-black">:</span>
-                <div className="bg-zinc-950 px-3 py-2 rounded-xl text-center border border-zinc-800 min-w-[50px]">
-                  <span className="text-lg text-amber-400 font-black">
-                    {String(timeLeft.minutes).padStart(2, '0')}
-                  </span>
-                  <span className="block text-[9px] text-zinc-500 font-sans font-normal uppercase">Min</span>
-                </div>
-                <span className="text-amber-400 font-black">:</span>
-                <div className="bg-zinc-950 px-3 py-2 rounded-xl text-center border border-zinc-800 min-w-[50px]">
-                  <span className="text-lg text-amber-400 font-black">
-                    {String(timeLeft.seconds).padStart(2, '0')}
-                  </span>
-                  <span className="block text-[9px] text-zinc-500 font-sans font-normal uppercase">Seg</span>
-                </div>
-              </div>
-            </div>
+
           </div>
 
-          {/* Flash Deals Grid */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 pt-8">
-            {(flashDealProducts.length > 0 ? flashDealProducts : products.slice(0, 4)).map(
-              (product) => (
-                <div key={product.id} className="space-y-2">
-                  <ProductCard
-                    product={product}
-                    onSelect={(id) => onNavigate('produto', id)}
-                  />
-                  {/* Stock Progress Bar */}
-                  <div className="bg-zinc-900/90 p-2.5 rounded-xl border border-zinc-800/80 text-[11px]">
-                    <div className="flex justify-between text-zinc-300 font-semibold mb-1">
-                      <span>Restam poucas unidades</span>
-                      <span className="text-amber-400 font-bold">{product.stock} un.</span>
-                    </div>
-                    <div className="w-full h-1.5 bg-zinc-800 rounded-full overflow-hidden">
-                      <div
-                        className="h-full bg-gradient-to-r from-amber-500 to-[#E6007A] rounded-full"
-                        style={{ width: `${Math.min(100, Math.max(25, 100 - product.stock * 3))}%` }}
-                      />
-                    </div>
-                  </div>
-                </div>
-              )
-            )}
+            {flashDealProducts.slice(0, 4).map((product) => (
+              <ProductCard key={product.id} product={product} onSelect={(id) => onNavigate('produto', id)} />
+            ))}
           </div>
         </div>
       </section>
+      )}
 
-      {/* 6. SEÇÃO 6 — VITRINE EDITORIAL: BELEZA FEMININA & SKINCARE GLOW */}
+      {beautyProducts.length > 0 && (
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="bg-white rounded-3xl p-6 sm:p-8 border border-zinc-200/90 shadow-md">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-stretch">
@@ -511,7 +445,7 @@ export const HomeView: React.FC<HomeViewProps> = ({ onNavigate }) => {
                     Destaques de Skincare &amp; Maquiagem
                   </h4>
                   <p className="text-xs text-zinc-500">
-                    Fórmulas aprovadas e mais vendidas na nossa plataforma.
+                    Produtos cadastrados na categoria beleza e maquiagem.
                   </p>
                 </div>
                 <button
@@ -524,7 +458,7 @@ export const HomeView: React.FC<HomeViewProps> = ({ onNavigate }) => {
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
-                {(beautyProducts.length > 0 ? beautyProducts.slice(0, 3) : products.slice(0, 3)).map(
+                {beautyProducts.slice(0, 3).map(
                   (product) => (
                     <ProductCard
                       key={product.id}
@@ -538,8 +472,10 @@ export const HomeView: React.FC<HomeViewProps> = ({ onNavigate }) => {
           </div>
         </div>
       </section>
+      )}
 
       {/* 7. SEÇÃO 7 — VITRINE EDITORIAL: CASA, DECORAÇÃO & ORGANIZAÇÃO */}
+      {homeProducts.length > 0 && (
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="bg-white rounded-3xl p-6 sm:p-8 border border-zinc-200/90 shadow-md">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-stretch">
@@ -593,7 +529,7 @@ export const HomeView: React.FC<HomeViewProps> = ({ onNavigate }) => {
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
-                {(homeProducts.length > 0 ? homeProducts.slice(0, 3) : products.slice(0, 3)).map(
+                {homeProducts.slice(0, 3).map(
                   (product) => (
                     <ProductCard
                       key={product.id}
@@ -607,8 +543,10 @@ export const HomeView: React.FC<HomeViewProps> = ({ onNavigate }) => {
           </div>
         </div>
       </section>
+      )}
 
       {/* 8. SEÇÃO 8 — NOVIDADES & LANÇAMENTOS */}
+      {newArrivals.length > 0 && (
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-end justify-between mb-8">
           <div>
@@ -629,7 +567,7 @@ export const HomeView: React.FC<HomeViewProps> = ({ onNavigate }) => {
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          {(newArrivals.length > 0 ? newArrivals : products.slice(0, 4)).map((product) => (
+          {newArrivals.slice(0, 4).map((product) => (
             <ProductCard
               key={product.id}
               product={product}
@@ -638,8 +576,10 @@ export const HomeView: React.FC<HomeViewProps> = ({ onNavigate }) => {
           ))}
         </div>
       </section>
+      )}
 
       {/* 9. SEÇÃO 9 — PRODUTOS RECOMENDADOS PARA VOCÊ */}
+      {recommendedProducts.length > 0 && (
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="bg-pink-50/60 p-6 sm:p-8 rounded-3xl border border-pink-100 shadow-xs">
           <div className="flex items-end justify-between mb-8">
@@ -651,7 +591,7 @@ export const HomeView: React.FC<HomeViewProps> = ({ onNavigate }) => {
                 Recomendados para Você
               </h2>
               <p className="text-xs text-zinc-600 mt-1">
-                Produtos selecionados com base nas maiores notas de aprovação e avaliações.
+                Produtos destacados pela equipe da loja.
               </p>
             </div>
             <button
@@ -664,7 +604,7 @@ export const HomeView: React.FC<HomeViewProps> = ({ onNavigate }) => {
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {(recommendedProducts.length > 0 ? recommendedProducts.slice(0, 4) : products.slice(0, 4)).map(
+            {recommendedProducts.slice(0, 4).map(
               (product) => (
                 <ProductCard
                   key={product.id}
@@ -676,97 +616,35 @@ export const HomeView: React.FC<HomeViewProps> = ({ onNavigate }) => {
           </div>
         </div>
       </section>
+      )}
 
-      {/* 10. SEÇÃO 10 — AVALIAÇÕES DE CLIENTES (COMPRA VERIFICADA) */}
-      <section className="bg-zinc-100/70 py-16 border-y border-zinc-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center max-w-2xl mx-auto mb-12">
-            <span className="text-xs font-black uppercase tracking-widest text-[#E6007A]">
-              Opinião de Quem Comprou
-            </span>
-            <h2 className="text-2xl sm:text-3xl font-black text-zinc-900 mt-1">
-              Avaliações Reais de Nossas Clientes
-            </h2>
-            <p className="text-xs text-zinc-600 mt-2 font-medium">
-              Mais de 4.800 pedidos entregues com carinho em todo o Brasil. Confira a experiência de quem já recebeu.
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="bg-white p-6 rounded-2xl shadow-sm border border-zinc-200/90 flex flex-col justify-between">
-              <div>
-                <div className="flex items-center gap-1 text-amber-500 mb-3">
-                  {[...Array(5)].map((_, i) => (
-                    <Star key={i} className="w-4 h-4 fill-current" />
-                  ))}
-                </div>
-                <p className="text-xs text-zinc-700 leading-relaxed italic mb-4">
-                  "O organizador 360° em acrílico superou todas as minhas expectativas! O material é grosso e resistente, e o giro é super suave. Chegou antes do prazo de frete grátis."
-                </p>
-              </div>
-              <div className="flex items-center gap-3 pt-4 border-t border-zinc-100">
-                <div className="w-10 h-10 rounded-full bg-pink-100 text-[#E6007A] font-black text-xs flex items-center justify-center">
-                  MS
-                </div>
-                <div>
-                  <h4 className="text-xs font-bold text-zinc-900">Mariana Silveira — São Paulo/SP</h4>
-                  <span className="text-[10px] text-emerald-700 font-bold flex items-center gap-1">
-                    <CheckCircle2 className="w-3.5 h-3.5" /> Compra Verificada
-                  </span>
-                </div>
-              </div>
+      {/* Avaliações publicadas e aprovadas pela administração */}
+      {publishedReviews.length > 0 && (
+        <section className="bg-zinc-100/70 py-16 border-y border-zinc-200">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="text-center max-w-2xl mx-auto mb-12">
+              <span className="text-xs font-black uppercase tracking-widest text-[#E6007A]">Opiniões de clientes</span>
+              <h2 className="text-2xl sm:text-3xl font-black text-zinc-900 mt-1">Avaliações de quem comprou</h2>
             </div>
-
-            <div className="bg-white p-6 rounded-2xl shadow-sm border border-zinc-200/90 flex flex-col justify-between">
-              <div>
-                <div className="flex items-center gap-1 text-amber-500 mb-3">
-                  {[...Array(5)].map((_, i) => (
-                    <Star key={i} className="w-4 h-4 fill-current" />
-                  ))}
-                </div>
-                <p className="text-xs text-zinc-700 leading-relaxed italic mb-4">
-                  "O kit de pincéis de maquiagem tem cerdas absurdamente macias, não soltam fios e esfumam como um sonho! Embalagem linda e muito segura."
-                </p>
-              </div>
-              <div className="flex items-center gap-3 pt-4 border-t border-zinc-100">
-                <div className="w-10 h-10 rounded-full bg-pink-100 text-[#E6007A] font-black text-xs flex items-center justify-center">
-                  CL
-                </div>
-                <div>
-                  <h4 className="text-xs font-bold text-zinc-900">Camila Lacerda — Belo Horizonte/MG</h4>
-                  <span className="text-[10px] text-emerald-700 font-bold flex items-center gap-1">
-                    <CheckCircle2 className="w-3.5 h-3.5" /> Compra Verificada
-                  </span>
-                </div>
-              </div>
-            </div>
-
-            <div className="bg-white p-6 rounded-2xl shadow-sm border border-zinc-200/90 flex flex-col justify-between">
-              <div>
-                <div className="flex items-center gap-1 text-amber-500 mb-3">
-                  {[...Array(5)].map((_, i) => (
-                    <Star key={i} className="w-4 h-4 fill-current" />
-                  ))}
-                </div>
-                <p className="text-xs text-zinc-700 leading-relaxed italic mb-4">
-                  "Espelho LED maravilhoso! A iluminação é muito forte e as 3 temperaturas de luz ajudam muito na hora da make para trabalhar. Super recomendo a loja."
-                </p>
-              </div>
-              <div className="flex items-center gap-3 pt-4 border-t border-zinc-100">
-                <div className="w-10 h-10 rounded-full bg-pink-100 text-[#E6007A] font-black text-xs flex items-center justify-center">
-                  RA
-                </div>
-                <div>
-                  <h4 className="text-xs font-bold text-zinc-900">Renata Alencar — Curitiba/PR</h4>
-                  <span className="text-[10px] text-emerald-700 font-bold flex items-center gap-1">
-                    <CheckCircle2 className="w-3.5 h-3.5" /> Compra Verificada
-                  </span>
-                </div>
-              </div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              {publishedReviews.slice(0, 3).map((review) => (
+                <article key={review.id} className="bg-white p-6 rounded-2xl shadow-sm border border-zinc-200/90 flex flex-col justify-between">
+                  <div>
+                    <div className="flex items-center gap-1 text-amber-500 mb-3">
+                      {Array.from({ length: review.rating }).map((_, index) => <Star key={index} className="w-4 h-4 fill-current" />)}
+                    </div>
+                    <p className="text-xs text-zinc-700 leading-relaxed italic mb-4">{review.comment}</p>
+                  </div>
+                  <div className="pt-4 border-t border-zinc-100">
+                    <h4 className="text-xs font-bold text-zinc-900">{review.authorName}</h4>
+                    <span className="text-[10px] text-zinc-500">{review.productName}</span>
+                  </div>
+                </article>
+              ))}
             </div>
           </div>
-        </div>
-      </section>
+        </section>
+      )}
 
       {/* 11. SEÇÃO 11 — FAIXA DE BENEFÍCIOS (MANDATÓRIO: FRETE GRÁTIS A PARTIR DE R$ 49,99) */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -777,7 +655,7 @@ export const HomeView: React.FC<HomeViewProps> = ({ onNavigate }) => {
             </div>
             <h3 className="font-black text-sm text-zinc-900 mb-1">Frete Grátis Express</h3>
             <p className="text-xs text-zinc-600 font-medium">
-              Válido para todo o Brasil em compras a partir de <strong>R$ 49,99</strong>.
+              Em compras a partir de <strong>R$ 49,99</strong>.
             </p>
           </div>
 
@@ -785,9 +663,9 @@ export const HomeView: React.FC<HomeViewProps> = ({ onNavigate }) => {
             <div className="w-12 h-12 rounded-2xl bg-pink-50 text-[#E6007A] flex items-center justify-center mb-3">
               <CreditCard className="w-6 h-6" />
             </div>
-            <h3 className="font-black text-sm text-zinc-900 mb-1">Parcelamento em até 6x</h3>
+            <h3 className="font-black text-sm text-zinc-900 mb-1">Opções de pagamento</h3>
             <p className="text-xs text-zinc-600 font-medium">
-              Parcele suas compras sem juros nos cartões de crédito.
+              Consulte as opções disponíveis no gateway de pagamento.
             </p>
           </div>
 
@@ -795,9 +673,9 @@ export const HomeView: React.FC<HomeViewProps> = ({ onNavigate }) => {
             <div className="w-12 h-12 rounded-2xl bg-pink-50 text-[#E6007A] flex items-center justify-center mb-3">
               <ShieldCheck className="w-6 h-6" />
             </div>
-            <h3 className="font-black text-sm text-zinc-900 mb-1">Segurança Garantida</h3>
+            <h3 className="font-black text-sm text-zinc-900 mb-1">Pagamento por gateway</h3>
             <p className="text-xs text-zinc-600 font-medium">
-              Criptografia de ponta a ponta e gateways de pagamento oficiais.
+              Você confere os dados e finaliza no provedor de pagamento configurado.
             </p>
           </div>
 
@@ -823,30 +701,19 @@ export const HomeView: React.FC<HomeViewProps> = ({ onNavigate }) => {
             </div>
 
             <h2 className="text-2xl sm:text-4xl font-black text-white tracking-tight">
-              Ganhe 10% OFF na Primeira Compra
+              Receba novidades e ofertas da loja
             </h2>
 
             <p className="text-xs sm:text-sm text-pink-100 max-w-lg mx-auto font-medium">
-              Cadastre seu e-mail e utilize o cupom exclusivo <strong>BEMVINDA10</strong> no checkout para garantir 10% de desconto imediato!
+              Cadastre seu e-mail para receber novidades e informações sobre novos produtos.
             </p>
 
-            {/* Coupon Quick Copy */}
-            <div className="inline-flex items-center gap-2 px-4 py-2 bg-white/15 backdrop-blur-xs rounded-xl border border-white/30 text-xs font-mono font-bold">
-              <span>Cupom: <strong>BEMVINDA10</strong></span>
-              <button
-                type="button"
-                onClick={handleCopyCoupon}
-                className="p-1 hover:bg-white/20 rounded transition-colors text-white"
-                title="Copiar cupom"
-              >
-                {copiedCoupon ? <Check className="w-4 h-4 text-emerald-300" /> : <Copy className="w-4 h-4" />}
-              </button>
-            </div>
+
 
             {newsletterSubmitted ? (
               <div className="p-4 bg-white/20 backdrop-blur-xs rounded-2xl inline-flex items-center gap-2 text-sm font-bold text-white animate-in zoom-in-95">
                 <CheckCircle2 className="w-5 h-5 text-emerald-300" />
-                <span>E-mail cadastrado com sucesso! Aproveite seu cupom BEMVINDA10 no checkout.</span>
+                <span>E-mail cadastrado com sucesso para receber novidades.</span>
               </div>
             ) : (
               <form onSubmit={handleNewsletterSubmit} className="space-y-3 pt-2">
@@ -863,7 +730,7 @@ export const HomeView: React.FC<HomeViewProps> = ({ onNavigate }) => {
                     type="submit"
                     className="px-6 py-3 bg-zinc-950 hover:bg-black text-white font-black text-xs uppercase tracking-wider rounded-xl transition-all shadow-md flex items-center justify-center gap-2 active:scale-95 shrink-0"
                   >
-                    <span>Quero Meu Cupom</span>
+                    <span>Cadastrar e-mail</span>
                     <Send className="w-3.5 h-3.5" />
                   </button>
                 </div>

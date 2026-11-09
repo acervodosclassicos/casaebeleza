@@ -4,7 +4,6 @@ import {
   ShoppingBag,
   Heart,
   User,
-  Menu,
   X,
   Sparkles,
   Truck,
@@ -12,10 +11,11 @@ import {
   LogOut,
   SlidersHorizontal,
   Package,
-  Zap,
-  ShieldCheck,
-  Flame,
-  ArrowRight,
+  Menu,
+  ChevronRight,
+  Tag,
+  Home,
+  Headset,
 } from 'lucide-react';
 import { useStore } from '../context/StoreContext';
 import { useAuth } from '../context/AuthContext';
@@ -27,15 +27,14 @@ interface HeaderProps {
   currentView: string;
 }
 
-export const Header: React.FC<HeaderProps> = ({ onNavigate, currentView }) => {
-  const { products, categories, cartTotals, setIsCartOpen, wishlist, settings } = useStore();
-  const { user, isAdmin, loginGoogle, logout } = useAuth();
+export const Header: React.FC<HeaderProps> = ({ onNavigate }) => {
+  const { products, categories, cartTotals, setIsCartOpen, wishlist } = useStore();
+  const { user, isAdmin, logout } = useAuth();
 
   const [searchQuery, setSearchQuery] = useState('');
-  const [searchCategory, setSearchCategory] = useState('');
   const [isSearchOpen, setIsSearchOpen] = useState(false);
-  const [isMenuDrawerOpen, setIsMenuDrawerOpen] = useState(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
+  const [isNavMenuOpen, setIsNavMenuOpen] = useState(false);
 
   const searchRef = useRef<HTMLDivElement>(null);
   const userMenuRef = useRef<HTMLDivElement>(null);
@@ -54,31 +53,11 @@ export const Header: React.FC<HeaderProps> = ({ onNavigate, currentView }) => {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  // Lock body scroll and listen for Escape key when menu drawer is open
-  useEffect(() => {
-    if (isMenuDrawerOpen) {
-      document.body.style.overflow = 'hidden';
-      const handleKeyDown = (e: KeyboardEvent) => {
-        if (e.key === 'Escape') {
-          setIsMenuDrawerOpen(false);
-        }
-      };
-      window.addEventListener('keydown', handleKeyDown);
-      return () => {
-        document.body.style.overflow = '';
-        window.removeEventListener('keydown', handleKeyDown);
-      };
-    } else {
-      document.body.style.overflow = '';
-    }
-  }, [isMenuDrawerOpen]);
-
   // Filter search suggestions
   const searchResults: Product[] = searchQuery.trim()
     ? products
         .filter((p) => {
           if (!p.active) return false;
-          if (searchCategory && p.category !== searchCategory) return false;
           const q = searchQuery.toLowerCase();
           return (
             p.title.toLowerCase().includes(q) ||
@@ -94,10 +73,7 @@ export const Header: React.FC<HeaderProps> = ({ onNavigate, currentView }) => {
     e.preventDefault();
     if (searchQuery.trim()) {
       setIsSearchOpen(false);
-      const queryParam = searchCategory
-        ? `cat:${searchCategory}&busca:${searchQuery.trim()}`
-        : `busca:${searchQuery.trim()}`;
-      onNavigate('catalogo', queryParam);
+      onNavigate('catalogo', `busca:${searchQuery.trim()}`);
     }
   };
 
@@ -111,7 +87,7 @@ export const Header: React.FC<HeaderProps> = ({ onNavigate, currentView }) => {
     <header className="sticky top-0 z-40 bg-white border-b border-pink-200/60 shadow-xs w-full overflow-x-hidden">
       {/* 1. BARRA SUPERIOR PROMOCIONAL FIXA (PADRÃO GRANDES MARKETPLACES) */}
       <div className="bg-gradient-to-r from-[#D0006E] via-[#E6007A] to-[#FF2E93] text-white py-1.5 sm:py-2 px-2.5 sm:px-4 shadow-inner">
-        <div className="max-w-7xl mx-auto flex items-center justify-center sm:justify-between text-[10px] sm:text-xs font-bold tracking-wide">
+        <div className="max-w-7xl mx-auto flex items-center justify-center text-[10px] sm:text-xs font-bold tracking-wide">
           <div className="flex items-center gap-1.5 sm:gap-2 text-center truncate">
             <span className="p-0.5 sm:p-1 bg-white/20 rounded-full flex items-center justify-center shrink-0">
               <Truck className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
@@ -120,34 +96,23 @@ export const Header: React.FC<HeaderProps> = ({ onNavigate, currentView }) => {
               FRETE GRÁTIS EM COMPRAS A PARTIR DE R$ 49,99
             </span>
           </div>
-
-          <div className="hidden md:flex items-center gap-6 text-[11px] font-semibold text-pink-100">
-            <span>✨ Até 6x Sem Juros</span>
-            <span>🔒 Compra Segura &amp; Blindada</span>
-            <span>⚡ Envio Expresso para todo o Brasil</span>
-          </div>
         </div>
       </div>
 
-      {/* 2. CABEÇALHO PRINCIPAL — PRIMEIRA LINHA */}
+      {/* Cabeçalho principal */}
       <div className="max-w-7xl mx-auto px-2.5 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-14 sm:h-20 gap-2 sm:gap-6">
-          {/* Left Block: Ícone de 3 paus (Menu) + Logotipo Comercial */}
-          <div className="flex items-center gap-1.5 sm:gap-3 min-w-0">
-            {/* Ícone de Três Paus (Menu de Departamentos e Navegação Completa) */}
+        <div className="grid grid-cols-[minmax(0,1fr)_auto] md:grid-cols-[auto_minmax(180px,1fr)_auto] items-center h-14 sm:h-20 gap-2 sm:gap-4">
+          {/* Menu principal + logotipo */}
+          <div className="flex items-center gap-2 sm:gap-3 min-w-0">
             <button
-              onClick={() => setIsMenuDrawerOpen(true)}
-              className="p-1.5 sm:px-3 sm:py-2 text-zinc-800 hover:text-[#E6007A] hover:bg-pink-50 rounded-xl transition-all flex items-center gap-1.5 sm:gap-2 shrink-0 border border-zinc-200/80 hover:border-pink-300 focus:outline-hidden group shadow-2xs"
-              aria-label="Abrir menu de departamentos e navegação"
-              title="Departamentos & Navegação"
+              type="button"
+              aria-label="Abrir menu de navegação"
+              aria-expanded={isNavMenuOpen}
+              onClick={() => setIsNavMenuOpen(true)}
+              className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl flex items-center justify-center text-zinc-700 hover:text-[#E6007A] hover:bg-pink-50 transition-colors shrink-0"
             >
-              <Menu className="w-5 h-5 sm:w-5 sm:h-5 text-zinc-800 group-hover:text-[#E6007A] transition-colors" />
-              <span className="hidden sm:inline text-xs font-extrabold text-zinc-800 group-hover:text-[#E6007A] transition-colors">
-                Departamentos
-              </span>
+              <Menu className="w-5 h-5 sm:w-6 sm:h-6" />
             </button>
-
-            {/* Logotipo Comercial */}
             <div
               onClick={() => onNavigate('home')}
               className="cursor-pointer flex items-center gap-1.5 sm:gap-3 select-none group py-1 shrink min-w-0"
@@ -172,20 +137,6 @@ export const Header: React.FC<HeaderProps> = ({ onNavigate, currentView }) => {
               onSubmit={handleSearchSubmit}
               className="relative flex items-center bg-zinc-100/90 rounded-full border-2 border-transparent focus-within:border-[#E6007A] focus-within:bg-white focus-within:ring-4 focus-within:ring-pink-100 transition-all shadow-inner"
             >
-              {/* Category Prefix Dropdown */}
-              <select
-                value={searchCategory}
-                onChange={(e) => setSearchCategory(e.target.value)}
-                className="bg-transparent text-xs font-bold text-zinc-700 pl-4 pr-1 py-3 border-r border-zinc-200 focus:outline-hidden cursor-pointer rounded-l-full hidden xl:block"
-              >
-                <option value="">Todos os Departamentos</option>
-                {categories.map((c) => (
-                  <option key={c.id} value={c.slug}>
-                    {c.name}
-                  </option>
-                ))}
-              </select>
-
               <div className="relative flex-1 flex items-center">
                 <input
                   type="text"
@@ -367,7 +318,7 @@ export const Header: React.FC<HeaderProps> = ({ onNavigate, currentView }) => {
                 </div>
               ) : (
                 <button
-                  onClick={loginGoogle}
+                  onClick={() => onNavigate('conta')}
                   className="flex items-center gap-1.5 p-1 sm:p-2 hover:bg-pink-50 rounded-xl sm:rounded-2xl transition-colors text-left shrink-0"
                   aria-label="Fazer login"
                 >
@@ -437,244 +388,57 @@ export const Header: React.FC<HeaderProps> = ({ onNavigate, currentView }) => {
         </div>
       </div>
 
-      {/* DRAWER UNIVERSAL DE NAVEGAÇÃO & DEPARTAMENTOS (ACIONADO PELO ÍCONE DE 3 PAUS) */}
-      {isMenuDrawerOpen && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex animate-in fade-in duration-200">
-          {/* Backdrop click to close */}
-          <div
-            className="fixed inset-0"
-            onClick={() => setIsMenuDrawerOpen(false)}
-            aria-hidden="true"
+      {/* Menu lateral completo */}
+      {isNavMenuOpen && (
+        <div className="fixed inset-0 z-[70]">
+          <button
+            type="button"
+            aria-label="Fechar menu"
+            onClick={() => setIsNavMenuOpen(false)}
+            className="absolute inset-0 bg-zinc-950/45 backdrop-blur-[2px]"
           />
-
-          {/* Drawer Content */}
-          <div className="relative w-full max-w-xs sm:max-w-sm md:max-w-md bg-white h-full shadow-2xl flex flex-col z-10 animate-in slide-in-from-left duration-250">
-            {/* Drawer Header */}
-            <div className="p-4 sm:p-5 bg-gradient-to-r from-[#D0006E] via-[#E6007A] to-[#FF2E93] text-white flex items-center justify-between shadow-md shrink-0">
-              <div className="flex items-center gap-3">
-                <div className="w-9 h-9 rounded-xl bg-white/20 backdrop-blur-xs flex items-center justify-center text-white shrink-0">
-                  <Sparkles className="w-5 h-5" />
-                </div>
-                <div>
-                  <h3 className="font-black text-sm sm:text-base tracking-tight leading-none">
-                    CASA &amp; BELEZA
-                  </h3>
-                  <p className="text-[10px] text-pink-100 font-bold uppercase tracking-wider mt-0.5">
-                    Departamentos &amp; Navegação
-                  </p>
-                </div>
+          <aside className="absolute left-0 top-0 bottom-0 w-[min(88vw,360px)] bg-white shadow-2xl flex flex-col animate-in slide-in-from-left duration-200">
+            <div className="px-5 py-5 bg-gradient-to-r from-[#D0006E] to-[#F02B91] text-white flex items-center justify-between">
+              <div>
+                <p className="text-[10px] font-bold tracking-[0.18em] uppercase text-white/75">Casa & Beleza Express</p>
+                <h2 className="text-lg font-black mt-1">Menu da loja</h2>
               </div>
-              <button
-                onClick={() => setIsMenuDrawerOpen(false)}
-                className="p-1.5 text-white/80 hover:text-white hover:bg-white/10 rounded-lg transition-colors"
-                aria-label="Fechar menu"
-              >
+              <button type="button" onClick={() => setIsNavMenuOpen(false)} aria-label="Fechar menu" className="w-9 h-9 rounded-full bg-white/15 hover:bg-white/25 flex items-center justify-center">
                 <X className="w-5 h-5" />
               </button>
             </div>
 
-            {/* Aviso de Frete Grátis no topo do menu */}
-            <div className="bg-pink-50 border-b border-pink-100 px-4 py-2 flex items-center gap-2 text-[11px] font-bold text-[#E6007A] shrink-0">
-              <Truck className="w-3.5 h-3.5 shrink-0" />
-              <span>FRETE GRÁTIS EM COMPRAS A PARTIR DE R$ 49,99</span>
-            </div>
-
-            {/* Drawer Scrollable Body */}
-            <div className="flex-1 overflow-y-auto divide-y divide-zinc-100">
-              {/* Bloco 1: Acesso Principal (Início, Ofertas do Dia, Rastrear Pedido) */}
-              <div className="p-3 sm:p-4 space-y-1">
-                <div className="px-3 py-1 text-[10px] font-extrabold text-zinc-400 uppercase tracking-wider">
-                  Navegação Principal
-                </div>
-
-                {/* Início */}
-                <button
-                  onClick={() => {
-                    setIsMenuDrawerOpen(false);
-                    onNavigate('home');
-                  }}
-                  className={`w-full text-left py-2.5 px-3 rounded-xl font-bold text-xs sm:text-sm flex items-center justify-between transition-colors ${
-                    currentView === 'home'
-                      ? 'bg-pink-100/70 text-[#E6007A]'
-                      : 'text-zinc-800 hover:bg-pink-50 hover:text-[#E6007A]'
-                  }`}
-                >
-                  <span className="flex items-center gap-2.5">
-                    <span className="text-base">🏠</span>
-                    <span>Início</span>
-                  </span>
-                  <ArrowRight className="w-4 h-4 text-zinc-300" />
-                </button>
-
-                {/* Ofertas do Dia */}
-                <button
-                  onClick={() => {
-                    setIsMenuDrawerOpen(false);
-                    onNavigate('catalogo', 'ofertas:true');
-                  }}
-                  className="w-full text-left py-2.5 px-3 rounded-xl font-black text-xs sm:text-sm text-white bg-gradient-to-r from-[#E6007A] to-[#FF4D9E] hover:from-[#D0006E] hover:to-[#E6007A] flex items-center justify-between shadow-xs transition-all"
-                >
-                  <span className="flex items-center gap-2">
-                    <Flame className="w-4 h-4 fill-current text-amber-200" />
-                    <span>Ofertas do Dia (Até 40% OFF)</span>
-                  </span>
-                  <span className="px-1.5 py-0.5 bg-white/20 rounded-md text-[10px] uppercase font-black">
-                    Hot
-                  </span>
-                </button>
-
-                {/* Rastrear Pedido */}
-                <button
-                  onClick={() => {
-                    setIsMenuDrawerOpen(false);
-                    onNavigate('acompanhar-pedido');
-                  }}
-                  className="w-full text-left py-2.5 px-3 rounded-xl font-bold text-xs sm:text-sm text-zinc-800 hover:bg-pink-50 hover:text-[#E6007A] flex items-center justify-between transition-colors"
-                >
-                  <span className="flex items-center gap-2.5">
-                    <Package className="w-4 h-4 text-[#E6007A]" />
-                    <span>Rastrear Pedido</span>
-                  </span>
-                  <ArrowRight className="w-4 h-4 text-zinc-300" />
-                </button>
+            <div className="flex-1 overflow-y-auto p-4 space-y-5">
+              <div className="space-y-1">
+                <p className="px-3 pb-2 text-[10px] font-extrabold uppercase tracking-widest text-zinc-400">Navegação</p>
+                <button onClick={() => { setIsNavMenuOpen(false); onNavigate('home'); }} className="w-full flex items-center gap-3 px-3 py-3 rounded-xl text-sm font-semibold text-zinc-800 hover:bg-pink-50 hover:text-[#E6007A]"><Home className="w-4 h-4" /> Página inicial <ChevronRight className="w-4 h-4 ml-auto text-zinc-300" /></button>
+                <button onClick={() => { setIsNavMenuOpen(false); onNavigate('catalogo'); }} className="w-full flex items-center gap-3 px-3 py-3 rounded-xl text-sm font-semibold text-zinc-800 hover:bg-pink-50 hover:text-[#E6007A]"><Package className="w-4 h-4" /> Todos os produtos <ChevronRight className="w-4 h-4 ml-auto text-zinc-300" /></button>
+                <button onClick={() => { setIsNavMenuOpen(false); onNavigate('catalogo', 'ofertas:true'); }} className="w-full flex items-center gap-3 px-3 py-3 rounded-xl text-sm font-semibold text-zinc-800 hover:bg-pink-50 hover:text-[#E6007A]"><Tag className="w-4 h-4" /> Ofertas e promoções <ChevronRight className="w-4 h-4 ml-auto text-zinc-300" /></button>
+                <button onClick={() => { setIsNavMenuOpen(false); onNavigate('acompanhar-pedido'); }} className="w-full flex items-center gap-3 px-3 py-3 rounded-xl text-sm font-semibold text-zinc-800 hover:bg-pink-50 hover:text-[#E6007A]"><Truck className="w-4 h-4" /> Rastrear encomenda <ChevronRight className="w-4 h-4 ml-auto text-zinc-300" /></button>
+                <button onClick={() => { setIsNavMenuOpen(false); onNavigate('contato'); }} className="w-full flex items-center gap-3 px-3 py-3 rounded-xl text-sm font-semibold text-zinc-800 hover:bg-pink-50 hover:text-[#E6007A]"><Headset className="w-4 h-4" /> Atendimento e contato <ChevronRight className="w-4 h-4 ml-auto text-zinc-300" /></button>
               </div>
 
-              {/* Bloco 2: Todos os Departamentos */}
-              <div className="p-3 sm:p-4 space-y-1">
-                <div className="flex items-center justify-between px-3 py-1">
-                  <span className="text-[10px] font-extrabold text-zinc-400 uppercase tracking-wider">
-                    Todos os Departamentos
-                  </span>
-                  <button
-                    onClick={() => {
-                      setIsMenuDrawerOpen(false);
-                      onNavigate('catalogo');
-                    }}
-                    className="text-[11px] font-bold text-[#E6007A] hover:underline"
-                  >
-                    Ver Tudo
-                  </button>
-                </div>
-
-                {/* Botão Ver Todo o Catálogo */}
-                <button
-                  onClick={() => {
-                    setIsMenuDrawerOpen(false);
-                    onNavigate('catalogo');
-                  }}
-                  className="w-full text-left py-2 px-3 rounded-xl font-bold text-xs sm:text-sm text-zinc-900 bg-zinc-50 hover:bg-pink-50 hover:text-[#E6007A] flex items-center justify-between transition-colors mb-1"
-                >
-                  <span className="flex items-center gap-2">
-                    <span>✨</span>
-                    <span>Todos os Produtos</span>
-                  </span>
-                  <ArrowRight className="w-3.5 h-3.5 text-zinc-400" />
-                </button>
-
-                {/* Categorias individuais com navegação direta */}
-                {categories.map((cat) => (
-                  <button
-                    key={cat.id}
-                    onClick={() => {
-                      setIsMenuDrawerOpen(false);
-                      onNavigate('catalogo', `cat:${cat.slug}`);
-                    }}
-                    className="w-full text-left py-2 px-3 rounded-xl font-semibold text-xs sm:text-sm text-zinc-700 hover:bg-pink-50 hover:text-[#E6007A] flex items-center justify-between transition-colors group"
-                  >
-                    <div className="flex items-center gap-2.5 truncate">
-                      <span className="w-1.5 h-1.5 rounded-full bg-pink-400 group-hover:scale-125 transition-transform shrink-0" />
-                      <span className="truncate">{cat.name}</span>
-                    </div>
-                    <ArrowRight className="w-3.5 h-3.5 text-zinc-300 group-hover:text-[#E6007A] group-hover:translate-x-0.5 transition-all shrink-0" />
-                  </button>
-                ))}
-              </div>
-
-              {/* Bloco 3: Minha Conta & Pedidos */}
-              <div className="p-3 sm:p-4 space-y-1">
-                <div className="px-3 py-1 text-[10px] font-extrabold text-zinc-400 uppercase tracking-wider">
-                  Minha Conta &amp; Pedidos
-                </div>
-                {user ? (
-                  <div className="space-y-1">
-                    <div className="px-3 py-2 bg-pink-50/60 rounded-xl flex items-center justify-between">
-                      <div className="min-w-0">
-                        <p className="text-[10px] text-zinc-400 font-semibold">Logada como</p>
-                        <p className="text-xs font-bold text-zinc-900 truncate">
-                          {user.displayName || user.email}
-                        </p>
-                      </div>
-                      <button
-                        onClick={logout}
-                        className="text-xs font-bold text-red-600 hover:underline px-2 py-1"
-                      >
-                        Sair
-                      </button>
-                    </div>
-                    <button
-                      onClick={() => {
-                        setIsMenuDrawerOpen(false);
-                        onNavigate('conta');
-                      }}
-                      className="w-full text-left py-2 px-3 rounded-xl font-semibold text-xs text-zinc-700 hover:bg-pink-50 hover:text-[#E6007A] flex items-center gap-2"
-                    >
-                      <User className="w-4 h-4 text-[#E6007A]" /> Meus Pedidos &amp; Cadastro
+              <div className="border-t border-zinc-100 pt-4">
+                <p className="px-3 pb-2 text-[10px] font-extrabold uppercase tracking-widest text-zinc-400">Departamentos</p>
+                <div className="space-y-1">
+                  {categories.filter((category) => category.name?.trim()).map((category) => (
+                    <button key={category.id} onClick={() => { setIsNavMenuOpen(false); onNavigate('catalogo', `cat:${category.slug}`); }} className="w-full flex items-center justify-between gap-3 px-3 py-3 rounded-xl text-sm text-zinc-700 hover:bg-pink-50 hover:text-[#E6007A] transition-colors">
+                      <span className="font-medium">{category.name}</span><ChevronRight className="w-4 h-4 text-zinc-300 shrink-0" />
                     </button>
-                    {isAdmin && (
-                      <button
-                        onClick={() => {
-                          setIsMenuDrawerOpen(false);
-                          onNavigate('admin');
-                        }}
-                        className="w-full text-left py-2 px-3 rounded-xl font-black text-xs text-[#E6007A] bg-pink-100/60 hover:bg-pink-200/60 flex items-center gap-2"
-                      >
-                        <SlidersHorizontal className="w-4 h-4" /> Painel Lojista (Admin)
-                      </button>
-                    )}
-                  </div>
-                ) : (
-                  <button
-                    onClick={() => {
-                      setIsMenuDrawerOpen(false);
-                      loginGoogle();
-                    }}
-                    className="w-full py-2.5 px-3 bg-zinc-900 hover:bg-black text-white text-xs font-bold rounded-xl flex items-center justify-center gap-2 transition-all shadow-xs"
-                  >
-                    <User className="w-4 h-4 text-pink-400" />
-                    <span>Entrar com Conta Google</span>
-                  </button>
-                )}
-              </div>
-
-              {/* Bloco 4: Ajuda & Segurança */}
-              <div className="p-3 sm:p-4 space-y-2 text-xs text-zinc-600">
-                <div className="px-3 py-1 text-[10px] font-extrabold text-zinc-400 uppercase tracking-wider">
-                  Suporte &amp; Segurança
-                </div>
-                <a
-                  href={`https://wa.me/${(settings.whatsappNumber || '5511987654321').replace(/\D/g, '')}?text=${encodeURIComponent('Olá! Gostaria de atendimento sobre a loja Casa & Beleza Express.')}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center gap-2 px-3 py-2 rounded-xl bg-emerald-50 text-emerald-800 hover:bg-emerald-100 font-bold transition-colors"
-                >
-                  <span>💬</span>
-                  <span>WhatsApp: {settings.contactPhone || '(11) 98765-4321'}</span>
-                </a>
-                <div className="px-3 py-1 text-[11px] text-zinc-500 space-y-1">
-                  <p className="flex items-center gap-1.5">
-                    <ShieldCheck className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-                    <span>Compra 100% Blindada com SSL</span>
-                  </p>
-                  <p className="flex items-center gap-1.5">
-                    <Zap className="w-3.5 h-3.5 text-amber-500 shrink-0" />
-                    <span>Até 6x Sem Juros ou 5% no PIX</span>
-                  </p>
+                  ))}
+                  {categories.length === 0 && <p className="px-3 py-2 text-xs text-zinc-400">As categorias serão exibidas aqui.</p>}
                 </div>
               </div>
             </div>
-          </div>
+
+            <div className="border-t border-zinc-100 p-4 bg-zinc-50">
+              <button onClick={() => { setIsNavMenuOpen(false); onNavigate('conta'); }} className="w-full flex items-center justify-center gap-2 rounded-xl bg-zinc-900 text-white py-3 text-sm font-bold hover:bg-[#E6007A] transition-colors"><User className="w-4 h-4" /> Minha conta / Entrar</button>
+              {isAdmin && <button onClick={() => { setIsNavMenuOpen(false); onNavigate('admin'); }} className="w-full mt-2 py-2.5 text-xs font-bold text-[#E6007A]">Abrir painel administrativo</button>}
+            </div>
+          </aside>
         </div>
       )}
+
     </header>
   );
 };

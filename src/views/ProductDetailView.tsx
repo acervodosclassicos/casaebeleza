@@ -21,7 +21,6 @@ import { ProductCard } from '../components/ProductCard';
 import {
   formatBRL,
   calculateDiscountPercentage,
-  calculateInstallments,
   formatCEP,
   calculateShipping,
 } from '../utils/shop-logic';
@@ -95,7 +94,7 @@ export const ProductDetailView: React.FC<ProductDetailViewProps> = ({
   }
 
   const discountPercent = calculateDiscountPercentage(product.price, product.compareAtPrice);
-  const installments = calculateInstallments(product.price, 6);
+  const averageRating = reviews.length > 0 ? reviews.reduce((sum, review) => sum + review.rating, 0) / reviews.length : 0;
   const wishlisted = isWishlisted(product.id);
 
   const images = product.images && product.images.length > 0 ? product.images : [product.thumbnail];
@@ -231,22 +230,17 @@ export const ProductDetailView: React.FC<ProductDetailViewProps> = ({
 
             {/* Ratings & Stock Badge */}
             <div className="flex items-center gap-4 mt-3">
-              <div className="flex items-center gap-1.5 text-amber-500 font-bold text-sm">
-                <div className="flex">
-                  {[...Array(5)].map((_, i) => (
-                    <Star
-                      key={i}
-                      className={`w-4 h-4 ${
-                        i < Math.floor(product.rating || 5) ? 'fill-current' : 'text-zinc-200'
-                      }`}
-                    />
-                  ))}
+              {reviews.length > 0 ? (
+                <div className="flex items-center gap-1.5 text-amber-500 font-bold text-sm">
+                  <div className="flex">
+                    {[...Array(5)].map((_, i) => <Star key={i} className={`w-4 h-4 ${i < Math.round(averageRating) ? 'fill-current' : 'text-zinc-200'}`} />)}
+                  </div>
+                  <span>{averageRating.toFixed(1)}</span>
+                  <span className="text-zinc-400 text-xs font-normal">({reviews.length} avaliações)</span>
                 </div>
-                <span>{(product.rating || 5).toFixed(1)}</span>
-                <span className="text-zinc-400 text-xs font-normal">
-                  ({reviews.length || product.reviewCount || 12} avaliações)
-                </span>
-              </div>
+              ) : (
+                <span className="text-zinc-400 text-xs">Ainda sem avaliações</span>
+              )}
 
               <span className="text-zinc-300">|</span>
 
@@ -268,9 +262,6 @@ export const ProductDetailView: React.FC<ProductDetailViewProps> = ({
                 {formatBRL(product.price)}
               </span>
             </div>
-            <p className="text-xs text-zinc-600 font-medium">
-              ou em <strong>{installments.formatted}</strong>
-            </p>
             {product.price >= 49.99 && (
               <div className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-lg text-xs font-bold">
                 <Truck className="w-4 h-4 text-emerald-600" />

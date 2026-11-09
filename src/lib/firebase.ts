@@ -1,5 +1,10 @@
 import { initializeApp } from 'firebase/app';
-import { getAuth, GoogleAuthProvider, signInWithPopup, signOut as fbSignOut } from 'firebase/auth';
+import {
+  getAuth, GoogleAuthProvider, signInWithPopup, signOut as fbSignOut,
+  createUserWithEmailAndPassword, signInWithEmailAndPassword,
+  sendPasswordResetEmail, sendEmailVerification, updateProfile,
+} from 'firebase/auth';
+import { getStorage } from 'firebase/storage';
 import {
   getFirestore,
   doc,
@@ -13,6 +18,7 @@ const app = initializeApp(firebaseConfig);
 // CRITICAL: Must pass firebaseConfig.firestoreDatabaseId as second argument
 export const db = getFirestore(app, firebaseConfig.firestoreDatabaseId);
 export const auth = getAuth(app);
+export const storage = getStorage(app);
 export const googleProvider = new GoogleAuthProvider();
 
 export enum OperationType {
@@ -83,4 +89,19 @@ export async function signInWithGoogle() {
 
 export async function logOut() {
   return await fbSignOut(auth);
+}
+
+export async function registerWithEmail(name: string, email: string, password: string) {
+  const credential = await createUserWithEmailAndPassword(auth, email.trim(), password);
+  if (name.trim()) await updateProfile(credential.user, { displayName: name.trim() });
+  await sendEmailVerification(credential.user);
+  return credential;
+}
+
+export async function signInWithEmail(email: string, password: string) {
+  return await signInWithEmailAndPassword(auth, email.trim(), password);
+}
+
+export async function sendPasswordReset(email: string) {
+  return await sendPasswordResetEmail(auth, email.trim());
 }

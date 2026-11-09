@@ -118,7 +118,7 @@ export const InstitutionalView: React.FC<InstitutionalViewProps> = ({ pageSlug, 
                 </div>
                 <div className="p-4 bg-zinc-50 rounded-xl border border-zinc-200 text-xs">
                   <h4 className="font-bold text-zinc-900 mb-1">Cartão de Crédito</h4>
-                  <p className="text-zinc-600">Parcelamento em até 6x sem juros nas principais bandeiras.</p>
+                  <p className="text-zinc-600">Parcelamento em até pagamento pelo gateway nas principais bandeiras.</p>
                 </div>
                 <div className="p-4 bg-zinc-50 rounded-xl border border-zinc-200 text-xs">
                   <h4 className="font-bold text-zinc-900 mb-1">Boleto Bancário</h4>

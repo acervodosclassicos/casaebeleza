@@ -1,8 +1,8 @@
 import React from 'react';
-import { Heart, ShoppingBag, Star, Zap, Sparkles, Truck } from 'lucide-react';
+import { Heart, ShoppingBag, Zap, Sparkles, Truck } from 'lucide-react';
 import { Product } from '../types';
 import { useStore } from '../context/StoreContext';
-import { formatBRL, calculateDiscountPercentage, calculateInstallments } from '../utils/shop-logic';
+import { formatBRL, calculateDiscountPercentage } from '../utils/shop-logic';
 
 interface ProductCardProps {
   product: Product;
@@ -13,7 +13,6 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, onSelect }) =
   const { addToCart, isWishlisted, toggleWishlist } = useStore();
 
   const discountPercent = calculateDiscountPercentage(product.price, product.compareAtPrice);
-  const installments = calculateInstallments(product.price, 6);
   const wishlisted = isWishlisted(product.id);
   const isLowStock = product.stock > 0 && product.stock <= 15;
   const hasFreeShipping = product.freeShipping || product.price >= 49.99;
@@ -90,15 +89,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, onSelect }) =
             <span className="font-bold text-zinc-400 uppercase tracking-wider text-[10px] truncate max-w-[120px]">
               {product.brand}
             </span>
-            {product.rating ? (
-              <div className="flex items-center gap-1 text-amber-500 font-bold text-xs shrink-0">
-                <Star className="w-3.5 h-3.5 fill-current" />
-                <span>{product.rating.toFixed(1)}</span>
-                {product.reviewCount ? (
-                  <span className="text-zinc-400 font-normal text-[10px]">({product.reviewCount})</span>
-                ) : null}
-              </div>
-            ) : null}
+
           </div>
 
           {/* Title */}
@@ -128,7 +119,6 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, onSelect }) =
             </span>
           </div>
 
-          <p className="text-[11px] text-zinc-500 mb-3">{installments.formatted}</p>
 
           <button
             onClick={handleAddToCart}

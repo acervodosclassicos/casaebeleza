@@ -5,7 +5,6 @@ import {
   ArrowRight,
   Truck,
   CheckCircle2,
-  Tag,
   CreditCard,
   ShoppingBag,
   AlertCircle,
@@ -21,7 +20,7 @@ interface CheckoutViewProps {
 }
 
 export const CheckoutView: React.FC<CheckoutViewProps> = ({ onNavigate }) => {
-  const { cart, cartTotals, appliedCoupon, createOrder, showToast } = useStore();
+  const { cart, cartTotals, createOrder, showToast } = useStore();
   const { user } = useAuth();
 
   // Step 1: Customer identification
@@ -106,20 +105,6 @@ export const CheckoutView: React.FC<CheckoutViewProps> = ({ onNavigate }) => {
     setIsSubmitting(true);
 
     try {
-      // Server-side validation
-      try {
-        await fetch('/api/checkout/validate', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            items: cart,
-            couponCode: appliedCoupon?.code,
-          }),
-        });
-      } catch {
-        // Backend verification optional fallback
-      }
-
       const shippingAddress: ShippingAddress = {
         cep,
         street,
@@ -131,9 +116,24 @@ export const CheckoutView: React.FC<CheckoutViewProps> = ({ onNavigate }) => {
       };
 
       // Retrieve configured payment link from product or default
-      const paymentLink =
-        cart.find((i) => i.externalPaymentLink)?.externalPaymentLink ||
-        'https://mpago.la/casabeleza-express';
+      const configuredLinks = Array.from(new Set(
+        cart.map((item) => item.externalPaymentLink?.trim()).filter((link): link is string => Boolean(link))
+      ));
+      if (configuredLinks.length !== 1 || cart.some((item) => !item.externalPaymentLink?.trim())) {
+        setErrorMsg(
+          cart.length > 1
+            ? 'Para concluir esta compra, todos os produtos precisam usar o mesmo link de pagamento. Configure um link válido em cada anúncio ou finalize um produto por vez.'
+            : 'Este produto ainda não possui um link de pagamento configurado. Entre em contato com a loja.'
+        );
+        setIsSubmitting(false);
+        return;
+      }
+      const paymentLink = configuredLinks[0];
+      if (!/^https:\/\//i.test(paymentLink)) {
+        setErrorMsg('O link de pagamento configurado é inválido. Entre em contato com a loja.');
+        setIsSubmitting(false);
+        return;
+      }
 
       const createdOrder = await createOrder({
         customerName: customerName.trim(),
@@ -468,15 +468,6 @@ export const CheckoutView: React.FC<CheckoutViewProps> = ({ onNavigate }) => {
                   {formatBRL(cartTotals.subtotal)}
                 </span>
               </div>
-
-              {cartTotals.discount > 0 && (
-                <div className="flex justify-between text-emerald-600 font-medium">
-                  <span className="flex items-center gap-1">
-                    <Tag className="w-3.5 h-3.5" /> Cupom {appliedCoupon?.code}
-                  </span>
-                  <span>-{formatBRL(cartTotals.discount)}</span>
-                </div>
-              )}
 
               <div className="flex justify-between">
                 <span>Frete de Envio</span>

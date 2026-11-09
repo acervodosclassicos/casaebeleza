@@ -22,33 +22,24 @@ export const PaymentCompletedView: React.FC<PaymentCompletedViewProps> = ({
   orderId,
   onNavigate,
 }) => {
-  const { getOrderById, getAllOrders } = useStore();
+  const { getOrderById } = useStore();
   const [order, setOrder] = useState<Order | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    let active = true;
     const fetchOrder = async () => {
       setLoading(true);
       if (orderId) {
         const found = await getOrderById(orderId);
-        if (found) {
-          setOrder(found);
-          setLoading(false);
-          return;
-        }
+        if (active) setOrder(found);
+      } else if (active) {
+        setOrder(null);
       }
-      try {
-        const all = await getAllOrders();
-        if (all.length > 0) {
-          setOrder(all[0]);
-        }
-      } catch {
-        // Guest user list access
-      }
-      setLoading(false);
+      if (active) setLoading(false);
     };
-
     fetchOrder();
+    return () => { active = false; };
   }, [orderId]);
 
   if (loading) {
@@ -60,7 +51,22 @@ export const PaymentCompletedView: React.FC<PaymentCompletedViewProps> = ({
     );
   }
 
-  const orderStatus = order?.status || 'aguardando_pagamento';
+  if (!order) {
+    return (
+      <div className="max-w-xl mx-auto px-4 py-20 text-center space-y-4">
+        <div className="w-16 h-16 mx-auto rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center"><Package className="w-8 h-8" /></div>
+        <h1 className="text-2xl font-black text-zinc-900">Não encontramos este pedido</h1>
+        <p className="text-sm text-zinc-500">Não foi possível carregar os dados do pedido. Volte à loja e consulte o histórico da sua conta ou fale com o atendimento.</p>
+        <button onClick={() => onNavigate('home')} className="px-6 py-3 rounded-xl bg-[#E6007A] text-white font-bold">Voltar à loja</button>
+      </div>
+    );
+  }
+
+  const createdAtValue = order.createdAt as unknown as string | { toDate?: () => Date };
+  const orderCreatedAt = typeof createdAtValue === 'string'
+    ? new Date(createdAtValue)
+    : createdAtValue?.toDate?.() || new Date();
+  const orderStatus = order.status || 'aguardando_pagamento';
   const statusInfo = getOrderStatusInfo(orderStatus);
 
   return (
@@ -69,16 +75,16 @@ export const PaymentCompletedView: React.FC<PaymentCompletedViewProps> = ({
         {/* Top Header Card */}
         <div className="bg-gradient-to-r from-[#E6007A] to-[#FF4D9E] p-8 text-white text-center space-y-3">
           <div className="w-16 h-16 rounded-full bg-white/20 backdrop-blur-xs flex items-center justify-center mx-auto mb-2 text-white shadow-inner">
-            <CheckCircle2 className="w-10 h-10" />
+            <Clock className="w-10 h-10" />
           </div>
           <span className="text-xs font-bold uppercase tracking-widest bg-white/20 px-3 py-1 rounded-full">
-            Pedido Recebido com Sucesso
+            PEDIDO REGISTRADO
           </span>
           <h1 className="text-2xl sm:text-4xl font-black tracking-tight">
-            Pagamento em Processamento!
+            Falta concluir o pagamento
           </h1>
           <p className="text-xs sm:text-sm text-pink-100 max-w-xl mx-auto leading-relaxed">
-            Estamos preparando seu produto com todo carinho. Seu pedido foi recebido e em breve você receberá atualizações sobre o andamento da entrega.
+            Seu pedido foi registrado. Para confirmar a compra, conclua o pagamento pelo ambiente seguro do gateway. A separação do produto começa após a confirmação.
           </p>
         </div>
 
@@ -89,22 +95,20 @@ export const PaymentCompletedView: React.FC<PaymentCompletedViewProps> = ({
             <div>
               <span className="text-zinc-400 block font-medium">Número do Pedido</span>
               <strong className="text-base text-zinc-900 font-mono">
-                {order ? order.orderNumber : '#CBE-DEMO849'}
+                {order.orderNumber}
               </strong>
             </div>
 
             <div>
               <span className="text-zinc-400 block font-medium">Data &amp; Horário</span>
               <span className="font-semibold text-zinc-800">
-                {order?.createdAt
-                  ? new Date(order.createdAt).toLocaleDateString('pt-BR', {
-                      day: '2-digit',
-                      month: '2-digit',
-                      year: 'numeric',
-                      hour: '2-digit',
-                      minute: '2-digit',
-                    })
-                  : new Date().toLocaleDateString('pt-BR')}
+                {orderCreatedAt.toLocaleDateString('pt-BR', {
+                  day: '2-digit',
+                  month: '2-digit',
+                  year: 'numeric',
+                  hour: '2-digit',
+                  minute: '2-digit',
+                })}
               </span>
             </div>
 
@@ -118,27 +122,27 @@ export const PaymentCompletedView: React.FC<PaymentCompletedViewProps> = ({
             </div>
           </div>
 
-          {/* External Payment Gateway Link Notice */}
+          {/* Payment action: primary, prominent and easy to tap */}
           {order?.paymentExternalLink && (
-            <div className="p-4 bg-pink-50 border border-pink-200 rounded-2xl flex flex-col sm:flex-row items-center justify-between gap-4">
-              <div className="text-xs space-y-1">
-                <h4 className="font-bold text-zinc-900">
-                  Link Externo de Pagamento Configurado
-                </h4>
-                <p className="text-zinc-600">
-                  Caso a tela de pagamento do gateway não tenha aberto automaticamente, você pode concluir a transação pelo link oficial abaixo:
-                </p>
+            <section className="rounded-3xl border-2 border-[#E6007A]/25 bg-gradient-to-br from-pink-50 via-white to-pink-50 p-5 sm:p-7 text-center space-y-3 shadow-sm">
+              <div className="mx-auto w-14 h-14 rounded-2xl bg-[#E6007A] text-white flex items-center justify-center shadow-lg shadow-pink-200">
+                <ShieldCheck className="w-7 h-7" />
+              </div>
+              <div className="space-y-1">
+                <h2 className="text-xl sm:text-2xl font-black text-zinc-900">Conclua seu pagamento agora</h2>
+                <p className="text-sm text-zinc-600 max-w-lg mx-auto">Você será direcionado ao ambiente oficial de pagamento configurado pela loja. Confira o valor antes de confirmar.</p>
               </div>
               <a
                 href={order.paymentExternalLink}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="px-5 py-2.5 bg-[#E6007A] hover:bg-[#D0006E] text-white rounded-xl text-xs font-bold transition-all shadow-xs flex items-center gap-2 shrink-0"
+                className="w-full sm:max-w-md mx-auto min-h-[58px] px-6 py-4 bg-[#E6007A] hover:bg-[#C90069] active:scale-[.99] text-white rounded-2xl text-base sm:text-lg font-black transition-all shadow-lg shadow-pink-200 flex items-center justify-center gap-3"
               >
-                <span>Acessar Gateway</span>
-                <ExternalLink className="w-4 h-4" />
+                <span>IR PARA PAGAMENTO</span>
+                <ExternalLink className="w-5 h-5" />
               </a>
-            </div>
+              <p className="text-[11px] text-zinc-500">O pedido só será considerado pago após a confirmação do gateway.</p>
+            </section>
           )}
 
           {/* Items Summary */}

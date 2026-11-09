@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { User, onAuthStateChanged } from 'firebase/auth';
 import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
-import { auth, db, signInWithGoogle, logOut, handleFirestoreError, OperationType } from '../lib/firebase';
+import { auth, db, signInWithGoogle, logOut, registerWithEmail, signInWithEmail, sendPasswordReset } from '../lib/firebase';
 import { UserProfile } from '../types';
 
 interface AuthContextType {
@@ -10,6 +10,9 @@ interface AuthContextType {
   isAdmin: boolean;
   loading: boolean;
   loginGoogle: () => Promise<void>;
+  loginEmail: (email: string, password: string) => Promise<void>;
+  registerEmail: (name: string, email: string, password: string) => Promise<void>;
+  resetPassword: (email: string) => Promise<void>;
   logout: () => Promise<void>;
   refreshProfile: () => Promise<void>;
 }
@@ -20,6 +23,9 @@ const AuthContext = createContext<AuthContextType>({
   isAdmin: false,
   loading: true,
   loginGoogle: async () => {},
+  loginEmail: async () => {},
+  registerEmail: async () => {},
+  resetPassword: async () => {},
   logout: async () => {},
   refreshProfile: async () => {},
 });
@@ -35,14 +41,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const fetchUserProfile = async (firebaseUser: User) => {
     try {
       const isUserBootstrapAdmin =
-        firebaseUser.email?.toLowerCase() === BOOTSTRAP_ADMIN_EMAIL.toLowerCase();
+        firebaseUser.email?.toLowerCase() === BOOTSTRAP_ADMIN_EMAIL.toLowerCase() && firebaseUser.emailVerified;
 
+      const adminSnap = await getDoc(doc(db, 'admins', firebaseUser.uid));
+      const hasAdminRecord = adminSnap.exists();
+      const isAuthorizedAdmin = isUserBootstrapAdmin || hasAdminRecord;
       const userRef = doc(db, 'users', firebaseUser.uid);
       const userSnap = await getDoc(userRef);
 
       if (userSnap.exists()) {
         const data = userSnap.data() as UserProfile;
-        const finalRole = isUserBootstrapAdmin ? 'admin' : (data.role || 'customer');
+        const finalRole = isAuthorizedAdmin ? 'admin' : 'customer';
         setUserProfile({
           ...data,
           role: finalRole,
@@ -54,8 +63,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           uid: firebaseUser.uid,
           email: firebaseUser.email || '',
           displayName: firebaseUser.displayName || firebaseUser.email?.split('@')[0] || 'Cliente',
-          role: isUserBootstrapAdmin ? 'admin' : 'customer',
-          photoURL: firebaseUser.photoURL || undefined,
+          role: isAuthorizedAdmin ? 'admin' : 'customer',
+          ...(firebaseUser.photoURL ? { photoURL: firebaseUser.photoURL } : {}),
           createdAt: new Date().toISOString(),
         };
 
@@ -70,12 +79,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
 
         setUserProfile(newProfile);
-        setIsAdmin(newProfile.role === 'admin');
+        setIsAdmin(isAuthorizedAdmin);
       }
     } catch (err) {
       console.warn('Could not fetch user profile from Firestore, using auth fallback:', err);
       const isUserBootstrapAdmin =
-        firebaseUser.email?.toLowerCase() === BOOTSTRAP_ADMIN_EMAIL.toLowerCase();
+        firebaseUser.email?.toLowerCase() === BOOTSTRAP_ADMIN_EMAIL.toLowerCase() && firebaseUser.emailVerified;
       setUserProfile({
         uid: firebaseUser.uid,
         email: firebaseUser.email || '',
@@ -117,6 +126,33 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  const loginEmail = async (email: string, password: string) => {
+    setLoading(true);
+    try {
+      const res = await signInWithEmail(email, password);
+      await fetchUserProfile(res.user);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const registerEmail = async (name: string, email: string, password: string) => {
+    if (email.trim().toLowerCase() === BOOTSTRAP_ADMIN_EMAIL.toLowerCase()) {
+      throw new Error('Esta conta administrativa não pode ser criada pelo cadastro público. Entre com Google ou use a conta administrativa já configurada.');
+    }
+    setLoading(true);
+    try {
+      const res = await registerWithEmail(name, email, password);
+      await fetchUserProfile(res.user);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const resetPassword = async (email: string) => {
+    await sendPasswordReset(email);
+  };
+
   const logout = async () => {
     await logOut();
     setUser(null);
@@ -138,6 +174,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         isAdmin,
         loading,
         loginGoogle,
+        loginEmail,
+        registerEmail,
+        resetPassword,
         logout,
         refreshProfile,
       }}

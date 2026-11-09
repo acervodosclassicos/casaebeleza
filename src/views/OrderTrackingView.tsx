@@ -13,6 +13,7 @@ import {
 import { useStore } from '../context/StoreContext';
 import { formatBRL, getOrderStatusInfo } from '../utils/shop-logic';
 import { Order } from '../types';
+import { useAuth } from '../context/AuthContext';
 
 interface OrderTrackingViewProps {
   initialOrderNumber?: string;
@@ -23,7 +24,8 @@ export const OrderTrackingView: React.FC<OrderTrackingViewProps> = ({
   initialOrderNumber,
   onNavigate,
 }) => {
-  const { getOrderById, getAllOrders, showToast } = useStore();
+  const { getOrderById, getUserOrders, getAllOrders, showToast } = useStore();
+  const { user, isAdmin } = useAuth();
 
   const [searchQuery, setSearchQuery] = useState(initialOrderNumber || '');
   const [order, setOrder] = useState<Order | null>(null);
@@ -45,17 +47,24 @@ export const OrderTrackingView: React.FC<OrderTrackingViewProps> = ({
       const found = await getOrderById(clean);
       if (found) {
         setOrder(found);
-      } else {
-        // Search in all orders
+      } else if (isAdmin) {
         const all = await getAllOrders();
-        const match = all.find(
-          (o) =>
-            o.orderNumber.toLowerCase() === clean.toLowerCase() ||
-            o.id.toLowerCase() === clean.toLowerCase() ||
-            o.customerEmail.toLowerCase() === clean.toLowerCase()
+        const match = all.find((o) => o.orderNumber.toLowerCase() === clean.toLowerCase() || o.id.toLowerCase() === clean.toLowerCase());
+        setOrder(match || null);
+      } else if (user) {
+        // Cliente autenticado consulta somente os próprios pedidos.
+        const ownOrders = await getUserOrders();
+        const match = ownOrders.find(
+          (o) => o.orderNumber.toLowerCase() === clean.toLowerCase() || o.id.toLowerCase() === clean.toLowerCase()
         );
         setOrder(match || null);
+      } else {
+        setOrder(null);
       }
+    } catch (error) {
+      console.error('Falha ao consultar rastreamento:', error);
+      showToast('Não foi possível consultar agora. Tente novamente.', 'error');
+      setOrder(null);
     } finally {
       setLoading(false);
     }
@@ -90,7 +99,7 @@ export const OrderTrackingView: React.FC<OrderTrackingViewProps> = ({
           Acompanhar Meu Pedido
         </h1>
         <p className="text-xs text-zinc-500">
-          Consulte o status da sua entrega informando o número do pedido ou o e-mail cadastrado na compra.
+          Informe o número do pedido para consultar o andamento. Para visualizar pedidos vinculados à sua conta, entre primeiro com seu login.
         </p>
 
         <form
@@ -102,7 +111,7 @@ export const OrderTrackingView: React.FC<OrderTrackingViewProps> = ({
         >
           <input
             type="text"
-            placeholder="Ex: CBE-849201 ou seu@email.com"
+            placeholder="Número do pedido (ex.: CBE-849201)"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="flex-1 bg-white border border-zinc-200 rounded-xl px-4 py-2.5 text-xs text-zinc-800 placeholder-zinc-400 focus:outline-hidden focus:border-[#E6007A] shadow-xs"
@@ -183,6 +192,15 @@ export const OrderTrackingView: React.FC<OrderTrackingViewProps> = ({
                 <Copy className="w-3.5 h-3.5" />
                 <span>Copiar Código</span>
               </button>
+              <a
+                href={`https://rastreamento.correios.com.br/app/index.php?objeto=${encodeURIComponent(order.trackingCode)}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold transition-colors flex items-center gap-1.5"
+              >
+                <ExternalLink className="w-3.5 h-3.5" />
+                <span>Rastrear nos Correios</span>
+              </a>
             </div>
           )}
 

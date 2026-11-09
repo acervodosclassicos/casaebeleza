@@ -1,0 +1,131 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Default deny catch-all
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() > 0 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isBootstrapAdmin() {
+      return isSignedIn() &&
+        request.auth.token.email == 'wesleycorreacdm2023@gmail.com';
+    }
+
+    function isAdmin() {
+      return isBootstrapAdmin() ||
+        (isSignedIn() && exists(/databases/$(database)/documents/admins/$(request.auth.uid)));
+    }
+
+    // Admins collection
+    match /admins/{adminId} {
+      allow read: if isSignedIn();
+      allow write: if isBootstrapAdmin();
+    }
+
+    // Users
+    match /users/{userId} {
+      allow get: if isValidId(userId) && (isAdmin() || (isSignedIn() && request.auth.uid == userId));
+      allow list: if isAdmin();
+      allow create: if isValidId(userId) && isSignedIn() && request.auth.uid == userId &&
+        (incoming().role == 'customer' || isAdmin());
+      allow update: if isValidId(userId) && isSignedIn() &&
+        (isAdmin() || (request.auth.uid == userId && !incoming().diff(existing()).affectedKeys().hasAny(['role'])));
+      allow delete: if isAdmin();
+    }
+
+    // Products catalog
+    match /products/{productId} {
+      allow get, list: if true;
+      allow create: if isValidId(productId) && isAdmin() &&
+        incoming().price >= 0 && incoming().stock >= 0;
+      allow update: if isValidId(productId) && isAdmin() &&
+        incoming().price >= 0 && incoming().stock >= 0;
+      allow delete: if isValidId(productId) && isAdmin();
+    }
+
+    // Categories
+    match /categories/{categoryId} {
+      allow get, list: if true;
+      allow write: if isValidId(categoryId) && isAdmin();
+    }
+
+    // Orders
+    match /orders/{orderId} {
+      allow get: if isValidId(orderId) && (
+        isAdmin() ||
+        (isSignedIn() && (resource.data.customerId == request.auth.uid || resource.data.customerEmail == request.auth.token.email))
+      );
+      allow list: if isAdmin() || (isSignedIn() && resource.data.customerId == request.auth.uid);
+      allow create: if isValidId(orderId) &&
+        incoming().total >= 0 &&
+        incoming().orderNumber is string &&
+        incoming().status == 'aguardando_pagamento';
+      allow update: if isValidId(orderId) && isAdmin();
+      allow delete: if isValidId(orderId) && isAdmin();
+    }
+
+    // Reviews
+    match /reviews/{reviewId} {
+      allow get: if isValidId(reviewId) && (resource.data.status == 'approved' || isAdmin());
+      allow list: if resource.data.status == 'approved' || isAdmin();
+      allow create: if isValidId(reviewId) &&
+        incoming().rating >= 1 && incoming().rating <= 5 &&
+        (incoming().status == 'pending' || isAdmin());
+      allow update, delete: if isValidId(reviewId) && isAdmin();
+    }
+
+    // Banners
+    match /banners/{bannerId} {
+      allow get, list: if true;
+      allow write: if isValidId(bannerId) && isAdmin();
+    }
+
+    // Coupons
+    match /coupons/{couponId} {
+      allow get, list: if true;
+      allow write: if isValidId(couponId) && isAdmin();
+    }
+
+    // Settings
+    match /settings/{settingId} {
+      allow get, list: if true;
+      allow write: if isValidId(settingId) && isAdmin();
+    }
+
+    // Contact messages
+    match /messages/{messageId} {
+      allow get, list: if isAdmin();
+      allow create: if isValidId(messageId) &&
+        incoming().email is string &&
+        incoming().name is string &&
+        incoming().status == 'unread';
+      allow update, delete: if isValidId(messageId) && isAdmin();
+    }
+
+    // Newsletter
+    match /newsletter/{subscriberId} {
+      allow get, list: if isAdmin();
+      allow create: if isValidId(subscriberId) &&
+        incoming().email is string &&
+        incoming().consent == true;
+      allow update, delete: if isValidId(subscriberId) && isAdmin();
+    }
+  }
+}

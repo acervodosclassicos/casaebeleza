@@ -1,0 +1,224 @@
+{
+  "entities": {
+    "User": {
+      "title": "User Profile",
+      "description": "User profile with role and contact info",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "maxLength": 128 },
+        "email": { "type": "string", "format": "email", "maxLength": 128 },
+        "displayName": { "type": "string", "maxLength": 100 },
+        "role": { "type": "string", "enum": ["admin", "customer"] },
+        "phone": { "type": "string", "maxLength": 30 },
+        "createdAt": { "type": "string" },
+        "updatedAt": { "type": "string" }
+      },
+      "required": ["uid", "email", "role"]
+    },
+    "Product": {
+      "title": "Product",
+      "description": "Catalog item in Casa & Beleza Express",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string", "maxLength": 200 },
+        "slug": { "type": "string", "maxLength": 200 },
+        "category": { "type": "string", "maxLength": 80 },
+        "subcategory": { "type": "string", "maxLength": 80 },
+        "brand": { "type": "string", "maxLength": 80 },
+        "description": { "type": "string", "maxLength": 5000 },
+        "shortDescription": { "type": "string", "maxLength": 500 },
+        "price": { "type": "number" },
+        "compareAtPrice": { "type": "number" },
+        "costPrice": { "type": "number" },
+        "stock": { "type": "number" },
+        "sku": { "type": "string", "maxLength": 60 },
+        "barcode": { "type": "string", "maxLength": 60 },
+        "weight": { "type": "number" },
+        "images": { "type": "array" },
+        "thumbnail": { "type": "string", "maxLength": 1000 },
+        "featured": { "type": "boolean" },
+        "flashDeal": { "type": "boolean" },
+        "isNew": { "type": "boolean" },
+        "active": { "type": "boolean" },
+        "externalPaymentLink": { "type": "string", "maxLength": 1500 },
+        "displayOrder": { "type": "number" },
+        "createdAt": { "type": "string" },
+        "updatedAt": { "type": "string" }
+      },
+      "required": ["title", "slug", "category", "price", "stock", "active"]
+    },
+    "Order": {
+      "title": "Order",
+      "description": "Customer purchase order",
+      "type": "object",
+      "properties": {
+        "orderNumber": { "type": "string", "maxLength": 32 },
+        "customerId": { "type": "string", "maxLength": 128 },
+        "customerEmail": { "type": "string", "format": "email", "maxLength": 128 },
+        "customerName": { "type": "string", "maxLength": 120 },
+        "customerPhone": { "type": "string", "maxLength": 30 },
+        "items": { "type": "array" },
+        "subtotal": { "type": "number" },
+        "discount": { "type": "number" },
+        "shipping": { "type": "number" },
+        "total": { "type": "number" },
+        "couponCode": { "type": "string", "maxLength": 50 },
+        "status": {
+          "type": "string",
+          "enum": [
+            "aguardando_pagamento",
+            "pagamento_aprovado",
+            "em_preparacao",
+            "enviado",
+            "entregue",
+            "cancelado"
+          ]
+        },
+        "paymentMethod": { "type": "string", "maxLength": 50 },
+        "paymentExternalLink": { "type": "string", "maxLength": 1500 },
+        "externalReference": { "type": "string", "maxLength": 128 },
+        "trackingCode": { "type": "string", "maxLength": 50 },
+        "notes": { "type": "string", "maxLength": 1000 },
+        "createdAt": { "type": "string" },
+        "updatedAt": { "type": "string" }
+      },
+      "required": ["orderNumber", "customerEmail", "customerName", "items", "total", "status"]
+    },
+    "Review": {
+      "title": "Product Review",
+      "description": "Product rating and feedback",
+      "type": "object",
+      "properties": {
+        "productId": { "type": "string", "maxLength": 128 },
+        "productName": { "type": "string", "maxLength": 200 },
+        "authorName": { "type": "string", "maxLength": 100 },
+        "authorEmail": { "type": "string", "maxLength": 128 },
+        "rating": { "type": "number" },
+        "comment": { "type": "string", "maxLength": 1500 },
+        "verifiedPurchase": { "type": "boolean" },
+        "status": { "type": "string", "enum": ["pending", "approved", "rejected"] },
+        "adminReply": { "type": "string", "maxLength": 1000 },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["productId", "authorName", "rating", "comment", "status"]
+    },
+    "Banner": {
+      "title": "Home Banner",
+      "description": "Promotional banner on the home page",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string", "maxLength": 150 },
+        "subtitle": { "type": "string", "maxLength": 300 },
+        "imageUrl": { "type": "string", "maxLength": 1000 },
+        "link": { "type": "string", "maxLength": 500 },
+        "ctaText": { "type": "string", "maxLength": 60 },
+        "badgeText": { "type": "string", "maxLength": 60 },
+        "active": { "type": "boolean" },
+        "order": { "type": "number" }
+      },
+      "required": ["title", "imageUrl", "active"]
+    },
+    "Coupon": {
+      "title": "Discount Coupon",
+      "description": "Promotional coupon code for checkout discounts",
+      "type": "object",
+      "properties": {
+        "code": { "type": "string", "maxLength": 40 },
+        "discountType": { "type": "string", "enum": ["percentage", "fixed"] },
+        "value": { "type": "number" },
+        "minPurchase": { "type": "number" },
+        "maxUses": { "type": "number" },
+        "usedCount": { "type": "number" },
+        "active": { "type": "boolean" },
+        "startDate": { "type": "string" },
+        "expiryDate": { "type": "string" }
+      },
+      "required": ["code", "discountType", "value", "active"]
+    },
+    "StoreSettings": {
+      "title": "Store Settings",
+      "description": "Global store settings and branding",
+      "type": "object",
+      "properties": {
+        "storeName": { "type": "string", "maxLength": 100 },
+        "logoUrl": { "type": "string", "maxLength": 1000 },
+        "contactPhone": { "type": "string", "maxLength": 40 },
+        "contactEmail": { "type": "string", "maxLength": 128 },
+        "whatsappNumber": { "type": "string", "maxLength": 40 },
+        "instagramUrl": { "type": "string", "maxLength": 300 },
+        "facebookUrl": { "type": "string", "maxLength": 300 },
+        "announcementText": { "type": "string", "maxLength": 300 },
+        "freeShippingThreshold": { "type": "number" },
+        "defaultShippingCost": { "type": "number" },
+        "seoTitle": { "type": "string", "maxLength": 120 },
+        "seoDescription": { "type": "string", "maxLength": 300 },
+        "ogImageUrl": { "type": "string", "maxLength": 1000 }
+      },
+      "required": ["storeName"]
+    },
+    "ContactMessage": {
+      "title": "Contact Message",
+      "description": "Customer inquiry submitted from contact form",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string", "maxLength": 120 },
+        "email": { "type": "string", "format": "email", "maxLength": 128 },
+        "phone": { "type": "string", "maxLength": 40 },
+        "subject": { "type": "string", "maxLength": 150 },
+        "message": { "type": "string", "maxLength": 2000 },
+        "status": { "type": "string", "enum": ["unread", "read", "replied"] },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["name", "email", "message", "status"]
+    },
+    "NewsletterSubscriber": {
+      "title": "Newsletter Subscriber",
+      "description": "Subscribed email for newsletters with LGPD consent",
+      "type": "object",
+      "properties": {
+        "email": { "type": "string", "format": "email", "maxLength": 128 },
+        "consent": { "type": "boolean" },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["email", "consent"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "User",
+      "description": "User profile with role and personal information"
+    },
+    "/products/{productId}": {
+      "schema": "Product",
+      "description": "Store products available in the catalog"
+    },
+    "/orders/{orderId}": {
+      "schema": "Order",
+      "description": "Customer orders and payment records"
+    },
+    "/reviews/{reviewId}": {
+      "schema": "Review",
+      "description": "Customer product reviews and admin replies"
+    },
+    "/banners/{bannerId}": {
+      "schema": "Banner",
+      "description": "Promotional homepage banners"
+    },
+    "/coupons/{couponId}": {
+      "schema": "Coupon",
+      "description": "Active and scheduled discount coupons"
+    },
+    "/settings/{settingId}": {
+      "schema": "StoreSettings",
+      "description": "Store-wide configuration, contacts, and branding"
+    },
+    "/messages/{messageId}": {
+      "schema": "ContactMessage",
+      "description": "Customer support messages submitted through contact form"
+    },
+    "/newsletter/{subscriberId}": {
+      "schema": "NewsletterSubscriber",
+      "description": "Newsletter subscribers with LGPD consent"
+    }
+  }
+}

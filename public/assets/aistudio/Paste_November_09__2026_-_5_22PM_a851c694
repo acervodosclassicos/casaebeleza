@@ -1,0 +1,1012 @@
+PROJETO COMPLETO — CASA & BELEZA EXPRESS
+
+Desenvolvimento de uma plataforma profissional de e-commerce Full Stack
+
+Assuma o papel de uma equipe sênior de desenvolvimento de software, composta por engenheiro Full Stack, arquiteto de sistemas, especialista em UX/UI, especialista em e-commerce, segurança, SEO, performance e infraestrutura.
+
+Sua missão é PROJETAR, DESENVOLVER, IMPLEMENTAR, TESTAR E ENTREGAR uma loja virtual profissional, totalmente funcional e pronta para operar comercialmente.
+
+NOME DA LOJA: CASA & BELEZA EXPRESS
+
+SEGMENTOS:
+
+- Beleza feminina e cosméticos.
+- Cuidados pessoais.
+- Maquiagem e acessórios.
+- Produtos para cabelo.
+- Organização doméstica.
+- Casa e decoração.
+- Utilidades para o lar.
+- Presentes e novidades.
+
+IMPORTANTE: Não quero apenas um protótipo visual, uma demonstração ou um conjunto de telas estáticas. Quero uma aplicação Full Stack real, com banco de dados, autenticação, armazenamento de imagens, painel administrativo, catálogo, pedidos e integração de pagamentos externos.
+
+Todo botão, formulário, menu, filtro, cadastro e funcionalidade deverá executar sua ação corretamente.
+
+---
+
+1. IDENTIDADE VISUAL E DESIGN
+
+Desenvolva uma identidade visual exclusiva para a Casa & Beleza Express.
+
+Paleta de cores principal:
+
+- Branco predominante.
+- Rosa-choque como cor de identidade.
+- Rosa pink em elementos de destaque.
+- Tons suaves de rosa para fundos secundários.
+- Cinza elegante para textos auxiliares.
+- Preto ou grafite para textos principais.
+
+A loja deverá transmitir:
+
+- Feminilidade.
+- Modernidade.
+- Elegância.
+- Confiança.
+- Organização.
+- Praticidade.
+- Sensação de loja profissional e consolidada.
+
+Não quero aparência de template pronto, site genérico ou projeto escolar.
+
+Crie uma identidade visual consistente, incluindo:
+
+- Logotipo tipográfico profissional.
+- Ícone/favicon.
+- Paleta padronizada.
+- Tipografia moderna e legível.
+- Botões com identidade própria.
+- Cards de produtos sofisticados.
+- Ícones consistentes.
+- Microanimações elegantes.
+
+O rosa-choque deverá ser marcante, mas utilizado com equilíbrio para não prejudicar a leitura.
+
+2. EXPERIÊNCIA VISUAL DA HOME
+
+A página inicial deverá ser extremamente profissional, moderna, intuitiva e comercialmente atrativa.
+
+Desenvolva uma home completa com:
+
+Cabeçalho:
+
+- Logotipo Casa & Beleza Express.
+- Barra de pesquisa funcional.
+- Minha conta.
+- Entrar ou cadastrar.
+- Ícone de favoritos.
+- Carrinho de compras com contador atualizado.
+- Menu de categorias.
+- Menu responsivo para dispositivos móveis.
+
+Banner principal:
+
+Crie um banner visual de alto impacto, com imagens comerciais de qualidade, identidade rosa e branca, chamadas promocionais e botão para visualizar ofertas.
+
+O banner deverá ser editável pelo administrador.
+
+Seções da página inicial:
+
+1. Banner principal.
+2. Categorias em destaque.
+3. Ofertas especiais.
+4. Mais vendidos.
+5. Novidades.
+6. Produtos recomendados.
+7. Vitrine de beleza.
+8. Vitrine casa e decoração.
+9. Ofertas relâmpago.
+10. Produtos em destaque.
+11. Avaliações e depoimentos de clientes.
+12. Benefícios de comprar na loja.
+13. Newsletter.
+14. Rodapé institucional completo.
+
+Cada seção deverá ser administrável pelo painel.
+
+Efeito visual 3D:
+
+Quero uma home moderna, com profundidade visual, animações 3D discretas, elementos flutuantes, transições suaves, efeitos de entrada, parallax moderado e interações elegantes nos cards de produtos.
+
+Utilize recursos modernos de CSS e JavaScript quando necessário.
+
+Não sacrifique a velocidade para obter efeitos visuais.
+
+As animações devem:
+
+- Ser leves.
+- Não travar celulares.
+- Respeitar a configuração de redução de movimento do dispositivo.
+- Não prejudicar a navegação.
+- Funcionar em navegadores modernos.
+
+3. RESPONSIVIDADE TOTAL
+
+Desenvolva a aplicação com abordagem Mobile First.
+
+A loja deverá funcionar perfeitamente em:
+
+- Smartphones Android.
+- iPhones.
+- Tablets.
+- Notebooks.
+- Computadores desktop.
+- Monitores grandes.
+- Diferentes resoluções e proporções de tela.
+
+Não quero apenas uma versão desktop reduzida no celular.
+
+Crie layouts específicos e adaptáveis para cada tamanho de tela.
+
+No celular:
+
+- Menu intuitivo.
+- Busca acessível.
+- Cards bem dimensionados.
+- Botões confortáveis para toque.
+- Imagens sem cortes inadequados.
+- Carrinho fácil de acessar.
+- Checkout simplificado.
+- Navegação fluida.
+
+No computador:
+
+- Vitrine organizada.
+- Aproveitamento inteligente da largura.
+- Grades de produtos bem distribuídas.
+- Cabeçalho completo.
+- Filtros acessíveis.
+- Visual sofisticado.
+
+4. VITRINE E CATÁLOGO DE PRODUTOS
+
+Crie uma página de catálogo profissional.
+
+Cada produto deverá apresentar:
+
+- Fotografia.
+- Nome.
+- Preço.
+- Preço anterior, quando existir.
+- Percentual de desconto, quando verdadeiro.
+- Condições de pagamento.
+- Disponibilidade.
+- Etiquetas promocionais.
+- Avaliação, quando houver avaliações reais.
+- Botão visualizar produto.
+- Botão adicionar aos favoritos.
+
+Implemente:
+
+- Filtros por categoria.
+- Filtros por preço.
+- Ordenação por menor preço.
+- Ordenação por maior preço.
+- Ordenação por novidades.
+- Ordenação por popularidade comprovada.
+- Busca por nome.
+- Busca por palavras-chave.
+- Paginação ou carregamento progressivo.
+- Filtros combinados.
+- Estado de carregamento.
+- Estado de catálogo vazio.
+
+As categorias e subcategorias deverão ser gerenciadas pelo administrador.
+
+5. PRODUTOS INICIAIS E CONTEÚDO
+
+Quero que a loja já seja entregue com uma vitrine visualmente organizada.
+
+Inclua alguns produtos iniciais somente quando houver fontes confiáveis de informações e imagens comerciais reais, com autorização de utilização.
+
+Não invente marcas, produtos, características técnicas, preços, fotografias ou disponibilidade.
+
+Não crie produtos fictícios para preencher a loja.
+
+Caso não seja possível verificar produtos reais, deixe o catálogo preparado e utilize espaços vazios elegantes até que eu cadastre meus produtos.
+
+Não invente:
+
+- Quantidade de vendas.
+- Histórico de pedidos.
+- Avaliações.
+- Comentários de clientes.
+- Depoimentos.
+- Estoque.
+- Popularidade.
+
+Todos os indicadores comerciais deverão ser baseados em dados reais do sistema.
+
+6. PÁGINA INDIVIDUAL DO PRODUTO
+
+Cada produto deverá possuir uma página exclusiva.
+
+Elementos obrigatórios:
+
+- Galeria de imagens.
+- Imagem principal ampliável.
+- Miniaturas.
+- Nome completo.
+- Descrição detalhada.
+- Características.
+- Especificações.
+- Marca.
+- Categoria.
+- Preço atual.
+- Preço anterior.
+- Desconto calculado automaticamente.
+- Opções de variação, quando aplicável.
+- Disponibilidade.
+- Informações de entrega.
+- Botão comprar agora.
+- Botão adicionar ao carrinho.
+- Botão favoritar.
+- Compartilhamento do produto.
+- Produtos relacionados.
+- Avaliações verificadas.
+- Dúvidas frequentes.
+
+O administrador deverá conseguir controlar todas essas informações.
+
+7. CARRINHO DE COMPRAS
+
+Implemente um carrinho de compras real.
+
+Funcionalidades:
+
+- Adicionar produtos.
+- Remover produtos.
+- Alterar quantidades.
+- Atualizar valores automaticamente.
+- Calcular subtotal.
+- Aplicar cupons.
+- Exibir descontos.
+- Exibir total.
+- Persistir o carrinho.
+- Verificar disponibilidade de estoque.
+- Impedir compras de quantidades indisponíveis.
+
+O carrinho deverá continuar disponível após o usuário atualizar a página ou retornar ao site.
+
+8. CHECKOUT COMPLETO
+
+Desenvolva um checkout profissional, seguro e simples.
+
+Etapas:
+
+1. Identificação do cliente.
+2. Login ou compra como visitante.
+3. Informações de contato.
+4. Endereço de entrega, quando necessário.
+5. Resumo do pedido.
+6. Aplicação de cupom.
+7. Confirmação dos dados.
+8. Redirecionamento para o pagamento externo.
+
+O checkout deverá registrar o pedido no banco de dados antes de encaminhar o cliente ao gateway.
+
+Cada pedido deverá receber:
+
+- Número exclusivo.
+- Identificação do cliente.
+- Produtos adquiridos.
+- Quantidades.
+- Valores.
+- Data e horário.
+- Situação do pagamento.
+- Situação do pedido.
+- Identificador da transação externa, quando disponível.
+
+Não permitir que o cliente altere valores ou informações comerciais manipulando o navegador.
+
+Os cálculos financeiros devem ser validados no backend.
+
+9. PAGAMENTO POR LINK EXTERNO CONFIGURÁVEL
+
+Esta é uma das funcionalidades mais importantes.
+
+Quero trabalhar com um gateway externo de pagamento.
+
+Na criação ou edição de cada anúncio, o administrador deverá possuir um campo específico:
+
+LINK EXTERNO DE PAGAMENTO
+
+O administrador poderá inserir o link de pagamento correspondente àquele produto.
+
+Funcionamento:
+
+1. Cliente acessa o produto.
+2. Cliente clica em comprar.
+3. O sistema registra o pedido.
+4. O cliente é encaminhado ao link de pagamento configurado.
+5. O gateway realiza a cobrança.
+6. Após a confirmação, o gateway deverá comunicar o sistema por webhook, quando essa integração estiver disponível.
+7. O pedido deverá ser atualizado conforme a confirmação recebida.
+
+Se o gateway permitir parâmetros de identificação, envie o identificador do pedido para relacionar o pagamento à compra.
+
+Não considere um simples redirecionamento para a página de sucesso como confirmação de pagamento.
+
+A confirmação deverá acontecer por webhook autenticado ou por consulta segura à API do gateway.
+
+Preveja os seguintes estados:
+
+- Aguardando pagamento.
+- Pagamento aprovado.
+- Pagamento recusado.
+- Pagamento expirado.
+- Pagamento cancelado.
+- Em preparação.
+- Enviado.
+- Entregue.
+- Pedido cancelado.
+
+Caso o gateway não ofereça webhook ou API, mantenha a atualização administrativa manual e deixe explícita essa limitação.
+
+10. PÁGINA DE PAGAMENTO CONCLUÍDO
+
+Crie uma página exclusiva, com identidade visual da Casa & Beleza Express.
+
+Mensagem principal:
+
+Pagamento aprovado!
+
+"Estamos preparando seu produto com todo carinho. Seu pedido foi recebido e em breve você receberá atualizações sobre o andamento da entrega."
+
+Exibir:
+
+- Número do pedido.
+- Resumo da compra.
+- Data.
+- Status.
+- Informações de acompanhamento, quando disponíveis.
+- Botão voltar à loja.
+- Botão acompanhar pedido.
+
+A página deverá receber o identificador do pedido de forma segura.
+
+IMPORTANTE: o acesso à página não poderá, sozinho, marcar um pedido como pago. A confirmação deverá vir do gateway.
+
+URL DE RETORNO:
+
+Estruture uma rota pública permanente e configurável, por exemplo:
+
+/pagamento-concluido
+
+Essa será a URL que vou cadastrar no gateway externo para redirecionamento após a compra.
+
+11. SISTEMA DE USUÁRIOS
+
+Implemente autenticação verdadeira.
+
+Funcionalidades:
+
+- Criar conta.
+- Entrar.
+- Sair.
+- Esqueci minha senha.
+- Recuperação por e-mail.
+- Login com Google.
+- Verificação de e-mail, quando aplicável.
+- Persistência de sessão.
+- Proteção de páginas privadas.
+- Perfil do cliente.
+- Edição de informações.
+- Histórico de pedidos.
+- Acompanhamento de compras.
+- Lista de favoritos.
+- Alteração de senha.
+
+Utilize Firebase Authentication.
+
+O login com Google deverá utilizar OAuth corretamente configurado, sem botões meramente decorativos.
+
+12. PAINEL ADMINISTRATIVO COMPLETO
+
+Desenvolva um painel administrativo profissional, independente da área pública da loja.
+
+Acesso exclusivo para administradores autorizados.
+
+Não permita que qualquer usuário comum se transforme em administrador pelo cadastro ou por alteração no navegador.
+
+Crie controle de permissões no backend.
+
+Dashboard:
+
+Exibir indicadores reais:
+
+- Vendas totais.
+- Faturamento.
+- Pedidos recebidos.
+- Pedidos aguardando pagamento.
+- Pedidos aprovados.
+- Pedidos em preparação.
+- Produtos cadastrados.
+- Produtos sem estoque.
+- Produtos mais vendidos.
+- Últimos pedidos.
+- Evolução das vendas.
+- Taxa de conversão, quando houver dados suficientes.
+
+Não exiba números inventados.
+
+Gerenciamento de produtos:
+
+Criar, editar, excluir, ativar, desativar e duplicar anúncios.
+
+Campos:
+
+- Título.
+- Slug.
+- Categoria.
+- Subcategoria.
+- Marca.
+- Descrição completa.
+- Descrição resumida.
+- Características.
+- Especificações técnicas.
+- Preço de venda.
+- Preço anterior.
+- Custo do produto, privado para o administrador.
+- Quantidade em estoque.
+- Código SKU.
+- Código de barras, quando aplicável.
+- Peso.
+- Dimensões.
+- Fotos.
+- Galeria de imagens.
+- Produto em destaque.
+- Produto promocional.
+- Variações.
+- Palavras-chave.
+- Meta title.
+- Meta description.
+- Status do anúncio.
+- Link externo de pagamento.
+- Ordem de exibição.
+
+Upload de imagens:
+
+- Upload de múltiplas imagens.
+- Pré-visualização.
+- Remoção.
+- Reordenação.
+- Imagem principal.
+- Compressão otimizada.
+- Conversão para formatos modernos, quando possível.
+- Armazenamento persistente.
+- Tratamento de erros.
+
+Gerenciamento de pedidos:
+
+- Listagem.
+- Busca.
+- Filtros.
+- Detalhes completos.
+- Dados do comprador.
+- Produtos.
+- Valores.
+- Pagamento.
+- Atualização de status.
+- Histórico de alterações.
+- Observações administrativas.
+- Exportação de relatórios.
+
+Gerenciamento de banners:
+
+- Adicionar imagens.
+- Alterar textos.
+- Configurar links.
+- Definir ordem.
+- Ativar ou desativar.
+- Configurar período promocional.
+
+Gerenciamento de avaliações:
+
+- Visualizar avaliações.
+- Moderar comentários.
+- Aprovar ou rejeitar.
+- Responder avaliações.
+- Excluir conteúdo inadequado.
+
+Gerenciamento de clientes:
+
+- Listar clientes.
+- Visualizar cadastro.
+- Consultar histórico de pedidos.
+- Consultar informações necessárias ao atendimento.
+- Respeitar as regras de privacidade e proteção de dados.
+
+13. AVALIAÇÕES E FEEDBACKS
+
+Crie uma seção de avaliações na página inicial.
+
+Quero poder inserir, editar, publicar e remover depoimentos pelo painel administrativo.
+
+Cada avaliação poderá conter:
+
+- Nome de exibição.
+- Foto, opcional.
+- Nota de 1 a 5 estrelas.
+- Comentário.
+- Data.
+- Produto relacionado, quando aplicável.
+
+Crie também avaliações individuais dentro das páginas dos produtos.
+
+As avaliações de compras deverão ser vinculadas a pedidos reais sempre que identificadas como compra verificada.
+
+Não invente clientes ou depoimentos.
+
+Não apresente avaliações administrativas como se fossem avaliações espontâneas de compradores.
+
+14. CUPONS E PROMOÇÕES
+
+Crie um sistema completo de cupons.
+
+O administrador poderá configurar:
+
+- Código.
+- Desconto percentual.
+- Desconto em valor fixo.
+- Data de início.
+- Data de validade.
+- Quantidade máxima de utilizações.
+- Valor mínimo de compra.
+- Produtos participantes.
+- Categorias participantes.
+- Ativo ou inativo.
+
+Implemente validação real no backend.
+
+15. ESTOQUE
+
+Implemente controle de estoque real.
+
+- Entrada de produtos.
+- Saída de produtos.
+- Atualização automática após pedidos aprovados.
+- Histórico de movimentação.
+- Alerta de estoque baixo.
+- Produtos esgotados.
+- Controle de variações.
+- Prevenção de venda acima do estoque.
+
+Evite descontar estoque novamente quando o mesmo webhook for recebido mais de uma vez.
+
+16. PÁGINAS INSTITUCIONAIS
+
+Crie todas as páginas abaixo:
+
+- Sobre nós.
+- Como comprar.
+- Formas de pagamento.
+- Entrega e frete.
+- Trocas e devoluções.
+- Política de privacidade.
+- Termos de uso.
+- Política de cookies.
+- Contato.
+- Perguntas frequentes.
+- Acompanhar pedido.
+
+Essas páginas deverão possuir conteúdo profissional, editável pelo administrador e adaptado à legislação brasileira.
+
+Não invente endereço comercial, CNPJ, telefone, garantias ou dados empresariais.
+
+Utilize campos configuráveis para informações ainda não fornecidas.
+
+17. LGPD E COOKIES
+
+Implemente um sistema de consentimento de cookies.
+
+Exibir aviso discreto e elegante na primeira visita.
+
+Opções:
+
+- Aceitar todos.
+- Rejeitar opcionais.
+- Personalizar preferências.
+
+Separar cookies essenciais, analíticos e de marketing.
+
+Registrar preferências e respeitar a escolha do usuário.
+
+Criar página específica de política de privacidade.
+
+Implementar medidas de proteção de dados pessoais conforme a LGPD.
+
+18. BUSCA INTELIGENTE
+
+Crie uma busca rápida e funcional.
+
+- Pesquisa por nome.
+- Pesquisa por categoria.
+- Pesquisa por marca.
+- Sugestões de produtos.
+- Resultados instantâneos.
+- Tratamento de erros de digitação, quando viável.
+- Mensagem quando nenhum produto for encontrado.
+
+A busca deverá consultar o catálogo real.
+
+19. OPEN GRAPH, SEO E COMPARTILHAMENTO
+
+Implemente SEO completo.
+
+Cada página deverá possuir:
+
+- Título SEO.
+- Meta description.
+- URL amigável.
+- Canonical.
+- Imagem de compartilhamento.
+- Open Graph.
+- Twitter Cards.
+- Dados estruturados Schema.org.
+- Sitemap XML.
+- Robots.txt.
+
+Cada produto deverá gerar uma prévia própria ao ser compartilhado no WhatsApp, Facebook, Instagram e outras plataformas compatíveis.
+
+Configurar:
+
+- og:title
+- og:description
+- og:image
+- og:url
+- og:type
+
+Criar uma imagem padrão profissional para compartilhamento da Casa & Beleza Express.
+
+Garantir que as informações Open Graph sejam entregues corretamente também para robôs de indexação e pré-visualização, inclusive em uma aplicação com renderização dinâmica.
+
+Não utilizar uma imagem genérica em todos os produtos quando existir imagem própria.
+
+20. PERFORMANCE E VELOCIDADE
+
+Quero uma loja extremamente rápida.
+
+Implemente:
+
+- Carregamento otimizado.
+- Lazy loading.
+- Imagens responsivas.
+- Compressão.
+- Cache.
+- Divisão de código.
+- Carregamento sob demanda.
+- Redução de JavaScript desnecessário.
+- Otimização de consultas ao banco.
+- Paginação.
+- Fontes otimizadas.
+- Prevenção de renderizações desnecessárias.
+
+Priorize Core Web Vitals.
+
+Busque bons resultados em Lighthouse, especialmente em dispositivos móveis.
+
+Não carregue todas as imagens e todos os produtos simultaneamente.
+
+21. INFRAESTRUTURA GOOGLE E BANCO DE DADOS
+
+Utilize tecnologias reais e integradas ao ecossistema Google.
+
+Arquitetura recomendada:
+
+- Google AI Studio para desenvolvimento.
+- Firebase Authentication para autenticação.
+- Cloud Firestore para banco de dados.
+- Firebase Storage para imagens.
+- Firebase App Hosting ou infraestrutura de hospedagem compatível.
+- Cloud Functions ou backend seguro para operações administrativas e integrações.
+- Firebase App Check, quando compatível.
+
+Crie uma estrutura organizada de coleções:
+
+- users
+- products
+- categories
+- orders
+- payments
+- reviews
+- banners
+- coupons
+- settings
+- inventory
+- favorites
+- newsletter
+- auditLogs
+
+Defina relacionamentos, índices, validações e regras de acesso.
+
+SEGURANÇA OBRIGATÓRIA:
+
+- Firestore Security Rules.
+- Storage Security Rules.
+- Validação de dados no servidor.
+- Controle de permissões.
+- Proteção de rotas administrativas.
+- Proteção contra alterações indevidas.
+- Proteção contra duplicação de transações.
+- Segredos e credenciais exclusivamente no backend.
+- Nenhuma chave privada exposta no frontend.
+- Logs administrativos.
+
+Não utilize LocalStorage como substituto do banco de dados.
+
+O armazenamento local poderá ser utilizado somente para preferências e recursos auxiliares.
+
+22. CONTATO E ATENDIMENTO
+
+Crie:
+
+- Página de contato.
+- Formulário funcional.
+- Botão de WhatsApp configurável.
+- E-mail de atendimento configurável.
+- Perguntas frequentes.
+- Mensagens de confirmação.
+- Registro das solicitações recebidas.
+
+Não invente números de WhatsApp ou endereços de e-mail.
+
+23. NEWSLETTER
+
+Crie um formulário para cadastro de e-mail.
+
+- Validação de e-mail.
+- Prevenção de duplicidade.
+- Registro no banco.
+- Consentimento para comunicação.
+- Gerenciamento pelo painel.
+- Exportação de contatos autorizados.
+
+24. RASTREAMENTO E HISTÓRICO DO PEDIDO
+
+Cada cliente deverá poder acompanhar seu pedido.
+
+Criar uma linha do tempo com:
+
+- Pedido recebido.
+- Aguardando pagamento.
+- Pagamento aprovado.
+- Em preparação.
+- Enviado.
+- Entregue.
+
+Os eventos deverão refletir os dados reais do sistema.
+
+Quando existir código de rastreamento, permitir seu cadastro no painel e exibição para o cliente.
+
+25. SEGURANÇA E CONFIABILIDADE
+
+Trate segurança como requisito central.
+
+Implemente:
+
+- Validação de entradas.
+- Sanitização de conteúdo.
+- Controle de acesso por função.
+- Proteção contra XSS.
+- Proteção contra CSRF, quando aplicável.
+- Rate limiting nos endpoints sensíveis.
+- Validação de webhooks.
+- Tratamento seguro de erros.
+- Prevenção de acesso não autorizado.
+- Proteção dos dados dos clientes.
+- Logs de operações importantes.
+- Backup e estratégia de recuperação.
+
+Não exponha informações administrativas ao público.
+
+26. CONFIGURAÇÕES GERAIS DA LOJA
+
+Crie uma área administrativa de configurações.
+
+Permitir alterar:
+
+- Nome da loja.
+- Logotipo.
+- Favicon.
+- Cores.
+- WhatsApp.
+- E-mail.
+- Redes sociais.
+- Banners.
+- Informações institucionais.
+- Links das páginas.
+- Configurações de pagamento.
+- Configurações de SEO.
+- Imagem Open Graph padrão.
+- Textos promocionais.
+- Configurações de frete.
+- Informações de contato.
+
+Não obrigue alterações no código para modificar informações comerciais comuns.
+
+27. EXPERIÊNCIA DE COMPRA
+
+Toda a navegação deverá ser simples.
+
+O cliente deverá conseguir:
+
+1. Entrar na loja.
+2. Encontrar produtos.
+3. Visualizar detalhes.
+4. Adicionar ao carrinho.
+5. Finalizar a compra.
+6. Ser encaminhado ao pagamento externo.
+7. Retornar à loja.
+8. Consultar o pedido.
+
+Reduza etapas desnecessárias.
+
+Utilize mensagens claras e feedback visual para cada ação.
+
+28. TESTES E AUDITORIA FINAL OBRIGATÓRIA
+
+Depois de desenvolver o sistema, NÃO considere o trabalho concluído imediatamente.
+
+Execute uma auditoria técnica completa.
+
+A. Testes de navegação
+
+- Todas as páginas abrem?
+- Todos os menus funcionam?
+- Todos os botões executam ações?
+- Todos os links estão corretos?
+- Não existem páginas quebradas?
+
+B. Testes de autenticação
+
+- Cadastro.
+- Login.
+- Logout.
+- Recuperação de senha.
+- Login Google.
+- Persistência de sessão.
+- Proteção administrativa.
+
+C. Testes de produtos
+
+- Criar anúncio.
+- Editar anúncio.
+- Excluir anúncio.
+- Upload de imagens.
+- Exibição na vitrine.
+- Exibição individual.
+- Busca e filtros.
+
+D. Testes de compra
+
+- Carrinho.
+- Quantidades.
+- Preços.
+- Cupons.
+- Criação do pedido.
+- Redirecionamento para gateway.
+- Retorno do pagamento.
+- Confirmação via webhook, se configurada.
+- Atualização do pedido.
+
+E. Testes administrativos
+
+- Dashboard.
+- Pedidos.
+- Estoque.
+- Clientes.
+- Avaliações.
+- Banners.
+- Configurações.
+
+F. Testes de dispositivos
+
+- Android.
+- iPhone.
+- Tablet.
+- Desktop.
+- Diferentes resoluções.
+
+G. Testes técnicos
+
+- Console sem erros relevantes.
+- Sem erros de compilação.
+- Sem rotas quebradas.
+- Sem falhas de banco.
+- Sem falhas de autenticação.
+- Sem vazamento de credenciais.
+- Open Graph.
+- SEO.
+- Performance.
+- Acessibilidade.
+- Regras de segurança.
+
+H. Testes de integridade
+
+- Dados persistem após atualização.
+- Pedidos não são duplicados.
+- Pagamentos não são confirmados indevidamente.
+- Estoque não fica negativo.
+- Usuários comuns não acessam o painel.
+- Dados de clientes não ficam públicos.
+
+Crie uma lista de auditoria com:
+
+- Funcionalidade testada.
+- Resultado.
+- Problema identificado.
+- Correção aplicada.
+- Resultado após correção.
+
+Corrija os problemas encontrados e repita os testes relevantes.
+
+Não declare que algo está funcionando se não tiver sido efetivamente testado.
+
+29. PADRÃO DE ENTREGA
+
+Quero um produto final com qualidade comercial.
+
+Não quero:
+
+- Botões decorativos.
+- Links falsos.
+- Formulários sem integração.
+- Login simulado.
+- Produtos fictícios.
+- Pedidos inventados.
+- Avaliações falsas.
+- Pagamentos simulados apresentados como reais.
+- Painel administrativo apenas visual.
+- Dados armazenados somente no navegador.
+- Páginas incompletas.
+- Informações de demonstração misturadas aos dados reais.
+- Créditos ou textos dizendo que o site foi feito por IA.
+- Assinaturas de plataformas de desenvolvimento.
+- Marcas d'água.
+- Conteúdo técnico aparecendo para os clientes.
+
+Não exiba ao público informações sobre ferramentas utilizadas no desenvolvimento.
+
+O resultado deverá parecer uma marca de e-commerce independente, profissional e estabelecida.
+
+30. INSTRUÇÕES FINAIS AO GOOGLE AI STUDIO
+
+Trabalhe como engenheiro Full Stack responsável por entregar a aplicação completa.
+
+Não pare na criação da interface.
+
+Implemente o frontend, backend, banco de dados, autenticação, armazenamento, integrações, regras de segurança e funcionalidades.
+
+Trabalhe por etapas internamente, mantendo a consistência da arquitetura.
+
+Antes de finalizar:
+
+1. Verifique toda a estrutura do projeto.
+2. Confira as integrações.
+3. Identifique funcionalidades incompletas.
+4. Execute testes.
+5. Corrija erros.
+6. Faça auditoria de segurança.
+7. Faça auditoria visual em diferentes dispositivos.
+8. Faça auditoria de performance.
+9. Entregue relatório final.
+
+Se alguma funcionalidade depender de credenciais, autorização externa, domínio, configuração OAuth ou integração com gateway que ainda não forneci, crie a estrutura real de integração e indique precisamente o que preciso configurar.
+
+Não substitua uma integração ausente por uma simulação.
+
+Não esconda limitações.
+
+REGRA PRINCIPAL:
+
+Prefiro uma funcionalidade corretamente implementada e testada a dez funcionalidades que apenas aparentam funcionar.
+
+A Casa & Beleza Express deverá estar preparada para receber clientes reais, cadastrar produtos reais, receber pedidos reais e operar comercialmente com segurança.
+
+Construa uma loja virtual moderna, rápida, bonita, intuitiva, responsiva e profissional, com identidade visual feminina em branco e rosa-choque.
+
+O objetivo é entregar uma plataforma de e-commerce completa, pronta para crescer e vender.
+
+COMECE A CONSTRUÇÃO DO PROJETO AGORA.

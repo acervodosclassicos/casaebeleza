@@ -36,135 +36,37 @@ app.get('/api/health', (_req: Request, res: Response) => {
   });
 });
 
-// Real webhook endpoint for external payment gateways
-// Handles Mercado Pago, Asaas, PagSeguro, Stripe, or generic webhook callbacks
-const processedTransactions = new Set<string>();
-
+// Payment webhook placeholder: it refuses events until provider-specific signature validation is implemented.
 app.post('/api/webhooks/payment', (req: Request, res: Response) => {
-  try {
-    const payload = req.body || {};
-    const authHeader = req.headers.authorization || req.headers['x-webhook-secret'];
-    
-    // Support standard gateway payload structures
-    const orderId =
-      payload.orderId ||
-      payload.external_reference ||
-      payload.data?.id ||
-      payload.id ||
-      req.query.orderId;
+  const configuredSecret = process.env.PAYMENT_WEBHOOK_SECRET;
+  const authorization = String(req.headers.authorization || '').replace(/^Bearer\s+/i, '');
+  const suppliedSecret = authorization || String(req.headers['x-webhook-secret'] || '');
 
-    const eventStatus =
-      payload.status ||
-      payload.event ||
-      payload.action ||
-      payload.type ||
-      'payment.approved';
-
-    const transactionId =
-      payload.transactionId ||
-      payload.payment_id ||
-      payload.id ||
-      `${orderId}_${Date.now()}`;
-
-    // Idempotency check: prevent duplicate processing of the same transaction
-    if (processedTransactions.has(transactionId)) {
-      return res.status(200).json({
-        success: true,
-        message: 'Transaction already processed (idempotent)',
-        transactionId,
-      });
-    }
-
-    processedTransactions.add(transactionId);
-    // Keep set bounded
-    if (processedTransactions.size > 1000) {
-      const first = processedTransactions.values().next().value;
-      if (first) processedTransactions.delete(first);
-    }
-
-    // Determine normalized order status
-    let mappedStatus = 'aguardando_pagamento';
-    const statusLower = String(eventStatus).toLowerCase();
-
-    if (
-      statusLower.includes('approved') ||
-      statusLower.includes('paid') ||
-      statusLower.includes('confirmado') ||
-      statusLower.includes('sucesso')
-    ) {
-      mappedStatus = 'pagamento_aprovado';
-    } else if (
-      statusLower.includes('refund') ||
-      statusLower.includes('reembolsado') ||
-      statusLower.includes('canceled') ||
-      statusLower.includes('cancelado')
-    ) {
-      mappedStatus = 'cancelado';
-    }
-
-    console.log(`[PAYMENT WEBHOOK] Order ${orderId} status updated to: ${mappedStatus} (Tx: ${transactionId})`);
-
-    return res.status(200).json({
-      success: true,
-      orderId,
-      status: mappedStatus,
-      transactionId,
-      processedAt: new Date().toISOString(),
+  if (!configuredSecret) {
+    return res.status(503).json({
+      success: false,
+      error: 'Webhook ainda não configurado para um gateway específico.',
     });
-  } catch (error) {
-    console.error('Webhook error:', error);
-    return res.status(500).json({ success: false, error: 'Internal processing error' });
   }
+  if (!suppliedSecret || suppliedSecret !== configuredSecret) {
+    return res.status(401).json({ success: false, error: 'Assinatura do webhook inválida.' });
+  }
+
+  // A secret alone does not authenticate a provider event. Implement and verify
+  // the selected gateway's signature before changing any order status.
+  return res.status(501).json({
+    success: false,
+    error: 'Validação específica do provedor ainda precisa ser implementada.',
+  });
 });
 
-// Server-side order calculation & price validation
-app.post('/api/checkout/validate', (req: Request, res: Response) => {
-  try {
-    const { items, couponCode } = req.body;
-    if (!Array.isArray(items) || items.length === 0) {
-      return res.status(400).json({ error: 'Nenhum item informado para cálculo' });
-    }
-
-    let subtotal = 0;
-    for (const item of items) {
-      const price = Number(item.price) || 0;
-      const quantity = Math.max(1, Math.floor(Number(item.quantity) || 1));
-      subtotal += price * quantity;
-    }
-
-    // Known coupons for server-side verification
-    let discount = 0;
-    let couponApplied = null;
-    if (couponCode && typeof couponCode === 'string') {
-      const codeUpper = couponCode.trim().toUpperCase();
-      if (codeUpper === 'BEMVINDA10') {
-        discount = Math.round(subtotal * 0.1 * 100) / 100;
-        couponApplied = { code: 'BEMVINDA10', description: '10% de desconto de boas-vindas' };
-      } else if (codeUpper === 'PRIMEIRACOMPRA' && subtotal >= 100) {
-        discount = 15;
-        couponApplied = { code: 'PRIMEIRACOMPRA', description: 'R$ 15,00 OFF acima de R$ 100' };
-      }
-    }
-
-    const freeShippingThreshold = 49.99;
-    const subtotalAfterDiscount = Math.max(0, subtotal - discount);
-    const isFreeShipping = subtotalAfterDiscount >= freeShippingThreshold;
-    const shipping = isFreeShipping ? 0 : 14.9;
-    const total = Math.max(0, subtotalAfterDiscount + shipping);
-
-    return res.json({
-      valid: true,
-      subtotal: Math.round(subtotal * 100) / 100,
-      discount: Math.round(discount * 100) / 100,
-      shipping: Math.round(shipping * 100) / 100,
-      total: Math.round(total * 100) / 100,
-      coupon: couponApplied,
-      isFreeShipping,
-    });
-  } catch (err) {
-    console.error('Checkout validation error:', err);
-    return res.status(500).json({ error: 'Erro ao validar cálculo do pedido' });
-  }
+// This endpoint remains intentionally unavailable until order prices are
+// recalculated from trusted Firestore product records on the server.
+app.post('/api/checkout/validate', (_req: Request, res: Response) => {
+  return res.status(503).json({
+    valid: false,
+    error: 'Validação de preços no servidor ainda não foi integrada. Não use valores enviados pelo navegador como fonte confiável.',
+  });
 });
 
 // Contact message endpoint

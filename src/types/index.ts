@@ -26,6 +26,9 @@ export interface Product {
   displayOrder?: number;
   rating?: number;
   reviewCount?: number;
+  /** Total quantity from orders whose payment was confirmed. */
+  salesCount?: number;
+  promotionMessage?: string;
   createdAt?: string;
   updatedAt?: string;
 }
@@ -84,6 +87,8 @@ export interface Order {
     | 'entregue'
     | 'cancelado';
   paymentMethod: string;
+  /** Prevents counting the same paid order more than once. */
+  salesCountApplied?: boolean;
   paymentExternalLink?: string;
   externalReference?: string;
   trackingCode?: string;
@@ -147,6 +152,8 @@ export interface StoreSettings {
   seoTitle: string;
   seoDescription: string;
   ogImageUrl: string;
+  cnpj?: string;
+  businessAddress?: string;
 }
 
 export interface ContactMessage {

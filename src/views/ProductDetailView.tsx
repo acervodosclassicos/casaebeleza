@@ -228,22 +228,21 @@ export const ProductDetailView: React.FC<ProductDetailViewProps> = ({
               {product.title}
             </h1>
 
-            {/* Ratings & Stock Badge */}
-            <div className="flex items-center gap-4 mt-3">
-              {reviews.length > 0 ? (
-                <div className="flex items-center gap-1.5 text-amber-500 font-bold text-sm">
-                  <div className="flex">
-                    {[...Array(5)].map((_, i) => <Star key={i} className={`w-4 h-4 ${i < Math.round(averageRating) ? 'fill-current' : 'text-zinc-200'}`} />)}
-                  </div>
-                  <span>{averageRating.toFixed(1)}</span>
-                  <span className="text-zinc-400 text-xs font-normal">({reviews.length} avaliações)</span>
-                </div>
-              ) : (
-                <span className="text-zinc-400 text-xs">Ainda sem avaliações</span>
-              )}
-
+            {/* Shop highlight and verified sales counter */}
+            <div className="flex flex-wrap items-center gap-x-3 gap-y-2 mt-3">
+              <div className="inline-flex items-center gap-1.5">
+                <span className="inline-flex items-center gap-0.5 text-amber-500" aria-label="Produto em destaque na loja">
+                  {[0, 1, 2, 3, 4].map((star) => (
+                    <Star key={star} className="w-4 h-4 fill-current" />
+                  ))}
+                </span>
+                <span className="text-xs font-semibold text-zinc-600">Destaque da loja</span>
+              </div>
               <span className="text-zinc-300">|</span>
-
+              <span className="text-xs text-zinc-600 font-medium">
+                {Math.max(0, product.salesCount || 0)} vendidos
+              </span>
+              <span className="text-zinc-300">|</span>
               <span className="inline-flex items-center gap-1 text-xs font-semibold text-emerald-600">
                 <CheckCircle2 className="w-4 h-4" /> Em Estoque ({product.stock} disponíveis)
               </span>
@@ -272,6 +271,12 @@ export const ProductDetailView: React.FC<ProductDetailViewProps> = ({
               🔥 5% de desconto extra via PIX no checkout!
             </p>
           </div>
+
+          {product.promotionMessage && (
+            <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-bold text-emerald-800">
+              <span className="mr-2">🎁</span>{product.promotionMessage}
+            </div>
+          )}
 
           {/* Variations if available */}
           {product.variations && product.variations.length > 0 && (
@@ -453,7 +458,7 @@ export const ProductDetailView: React.FC<ProductDetailViewProps> = ({
         <div className="py-6">
           {activeTab === 'desc' && (
             <div className="max-w-3xl space-y-4 text-zinc-700 leading-relaxed text-sm">
-              <p>{product.description}</p>
+              <p className="whitespace-pre-line">{product.description}</p>
               {product.shortDescription && (
                 <div className="p-4 bg-pink-50/50 rounded-xl border border-pink-100 text-xs text-zinc-700">
                   <strong>Destaque do Produto:</strong> {product.shortDescription}

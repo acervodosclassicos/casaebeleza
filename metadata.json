@@ -2,5 +2,5 @@
   "name": "Casa & Beleza Express",
   "description": "Plataforma profissional de e-commerce de beleza, cosméticos e utilidades para o lar com pagamentos integrados e painel administrativo.",
   "requestFramePermissions": [],
-  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+  "majorCapabilities": []
 }

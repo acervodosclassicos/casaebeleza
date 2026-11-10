@@ -28,8 +28,6 @@ import { useAuth } from '../context/AuthContext';
 import { useStore } from '../context/StoreContext';
 import { formatBRL, getOrderStatusInfo } from '../utils/shop-logic';
 import { Product, Order, Banner, StoreSettings, Review, Coupon } from '../types';
-import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
-import { storage } from '../lib/firebase';
 
 export const AdminView: React.FC = () => {
   const { user, isAdmin, loginGoogle } = useAuth();
@@ -63,7 +61,6 @@ export const AdminView: React.FC = () => {
   // Product Editing / Creation modal
   const [editingProduct, setEditingProduct] = useState<Partial<Product> | null>(null);
   const [isProductModalOpen, setIsProductModalOpen] = useState(false);
-  const [isUploadingImages, setIsUploadingImages] = useState(false);
 
   // Order Details Modal
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
@@ -203,13 +200,14 @@ export const AdminView: React.FC = () => {
       sku: editingProduct.sku || 'SKU-001',
       barcode: editingProduct.barcode,
       weight: Number(editingProduct.weight) || 0.2,
-      thumbnail: editingProduct.thumbnail || '',
-      images: editingProduct.images && editingProduct.images.length > 0 ? editingProduct.images : (editingProduct.thumbnail ? [editingProduct.thumbnail] : []),
+      thumbnail: editingProduct.thumbnail || (editingProduct.images || []).find(Boolean) || '',
+      images: (editingProduct.images || []).filter(Boolean).length > 0 ? (editingProduct.images || []).filter(Boolean) : (editingProduct.thumbnail ? [editingProduct.thumbnail] : []),
       featured: Boolean(editingProduct.featured),
       flashDeal: Boolean(editingProduct.flashDeal),
       isNew: Boolean(editingProduct.isNew),
       active: Boolean(editingProduct.active ?? true),
       externalPaymentLink: editingProduct.externalPaymentLink || '',
+      promotionMessage: editingProduct.promotionMessage || '',
       createdAt: editingProduct.createdAt || new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     };
@@ -222,42 +220,6 @@ export const AdminView: React.FC = () => {
       console.error('Erro ao salvar anúncio:', error);
       showToast(error?.message || 'Não foi possível salvar o anúncio. Verifique as permissões do Firebase.', 'error');
     }
-  };
-
-  const handleProductImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const files = Array.from(event.target.files || []);
-    event.target.value = '';
-    if (!files.length || !editingProduct) return;
-    const invalid = files.find((file) => !file.type.startsWith('image/'));
-    if (invalid) { showToast('Selecione somente arquivos de imagem.', 'error'); return; }
-    const oversized = files.find((file) => file.size > 5 * 1024 * 1024);
-    if (oversized) { showToast('Cada imagem deve ter no máximo 5 MB.', 'error'); return; }
-    setIsUploadingImages(true);
-    try {
-      const urls = await Promise.all(files.map(async (file) => {
-        const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, '-');
-        const imageRef = ref(storage, `products/${editingProduct.id || 'new'}/${Date.now()}-${safeName}`);
-        const result = await uploadBytes(imageRef, file, { contentType: file.type });
-        return await getDownloadURL(result.ref);
-      }));
-      setEditingProduct((current) => {
-        if (!current) return current;
-        const images = [...(current.images || []), ...urls];
-        return { ...current, images, thumbnail: current.thumbnail || images[0] };
-      });
-      showToast(`${urls.length} imagem(ns) enviada(s) com sucesso.`, 'success');
-    } catch (error: any) {
-      console.error('Falha no upload de imagem:', error);
-      showToast(error?.message || 'Falha ao enviar imagem. Verifique as regras do Firebase Storage.', 'error');
-    } finally { setIsUploadingImages(false); }
-  };
-
-  const handleRemoveProductImage = (url: string) => {
-    setEditingProduct((current) => {
-      if (!current) return current;
-      const images = (current.images || []).filter((image) => image !== url);
-      return { ...current, images, thumbnail: current.thumbnail === url ? (images[0] || '') : current.thumbnail };
-    });
   };
 
   const handleDuplicateProduct = async (p: Product) => {
@@ -857,6 +819,17 @@ export const AdminView: React.FC = () => {
               </div>
             </div>
 
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label className="block font-semibold text-zinc-700 mb-1">CNPJ</label>
+                <input type="text" defaultValue={settings.cnpj || ''} onBlur={(e) => updateSettings({ cnpj: e.target.value })} placeholder="00.000.000/0000-00" className="w-full bg-zinc-50 border border-zinc-200 rounded-xl px-3 py-2 text-zinc-900" />
+              </div>
+              <div>
+                <label className="block font-semibold text-zinc-700 mb-1">Endereço comercial</label>
+                <input type="text" defaultValue={settings.businessAddress || ''} onBlur={(e) => updateSettings({ businessAddress: e.target.value })} placeholder="Rua, número, bairro, cidade/UF, CEP" className="w-full bg-zinc-50 border border-zinc-200 rounded-xl px-3 py-2 text-zinc-900" />
+              </div>
+            </div>
+
             <div>
               <label className="block font-semibold text-zinc-700 mb-1">
                 Texto do Banner Superior de Avisos
@@ -1007,39 +980,48 @@ export const AdminView: React.FC = () => {
                 </span>
               </div>
 
-              <div className="rounded-2xl border border-dashed border-pink-300 bg-pink-50/40 p-4 space-y-3">
+              <div className="rounded-2xl border border-zinc-200 bg-zinc-50 p-4 space-y-3">
                 <div>
-                  <label className="block font-bold text-zinc-800 mb-1">Fotos do anúncio</label>
-                  <p className="text-[11px] text-zinc-500">Envie imagens JPG, PNG, WEBP ou GIF de até 5 MB cada. A primeira imagem será usada como foto principal.</p>
+                  <label className="block font-bold text-zinc-800 mb-1">Imagens do anúncio (até 6 links)</label>
+                  <p className="text-[11px] text-zinc-500">Cole os links públicos das imagens. O primeiro link será a imagem principal. Não é necessário enviar arquivos.</p>
                 </div>
-                <input type="file" accept="image/jpeg,image/png,image/webp,image/gif" multiple onChange={handleProductImageUpload} disabled={isUploadingImages} className="block w-full text-xs text-zinc-600 file:mr-3 file:rounded-lg file:border-0 file:bg-[#E6007A] file:px-4 file:py-2 file:font-bold file:text-white hover:file:bg-[#D0006E] disabled:opacity-50" />
-                {isUploadingImages && <p className="text-xs font-bold text-[#E6007A] animate-pulse">Enviando imagens para o armazenamento seguro...</p>}
-                {(editingProduct.images || []).length > 0 && (
-                  <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
-                    {(editingProduct.images || []).map((url, index) => (
-                      <div key={`${url}-${index}`} className="relative group aspect-square rounded-xl overflow-hidden border border-zinc-200 bg-white">
-                        <img src={url} alt={`Imagem ${index + 1}`} className="w-full h-full object-cover" />
-                        {index === 0 && <span className="absolute bottom-1 left-1 rounded bg-[#E6007A] px-1.5 py-0.5 text-[9px] font-bold text-white">Principal</span>}
-                        <button type="button" onClick={() => handleRemoveProductImage(url)} className="absolute top-1 right-1 rounded-full bg-black/70 text-white w-6 h-6 text-sm leading-none" aria-label="Remover imagem">×</button>
+                {Array.from({ length: 6 }, (_, index) => (
+                  <div key={index}>
+                    <label className="block text-[11px] font-semibold text-zinc-600 mb-1">Imagem {index + 1}{index === 0 ? ' — principal' : ''}</label>
+                    <input type="url" value={(editingProduct.images || [])[index] || ''} onChange={(e) => {
+                      const images = [...(editingProduct.images || [])];
+                      images[index] = e.target.value.trim();
+                      setEditingProduct({ ...editingProduct, images, thumbnail: images[0] || '' });
+                    }} placeholder="https://exemplo.com/imagem.jpg" className="w-full bg-white border border-zinc-200 rounded-xl p-2.5 text-zinc-900" />
+                  </div>
+                ))}
+                {(editingProduct.images || []).filter(Boolean).length > 0 && (
+                  <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
+                    {(editingProduct.images || []).filter(Boolean).map((url, index) => (
+                      <div key={`${url}-${index}`} className="aspect-square rounded-lg overflow-hidden border border-zinc-200 bg-white">
+                        <img src={url} alt={`Prévia ${index + 1}`} className="w-full h-full object-cover" />
                       </div>
                     ))}
                   </div>
                 )}
-                <label className="block text-[11px] font-semibold text-zinc-600">Ou informe uma URL de imagem
-                  <input type="url" value={editingProduct.thumbnail || ''} onChange={(e) => setEditingProduct({ ...editingProduct, thumbnail: e.target.value, images: e.target.value ? [e.target.value, ...(editingProduct.images || []).filter((url) => url !== e.target.value)] : (editingProduct.images || []) })} placeholder="https://..." className="mt-1 w-full bg-white border border-zinc-200 rounded-xl p-2.5 text-zinc-900" />
-                </label>
               </div>
 
               <div>
                 <label className="block font-semibold text-zinc-700 mb-1">Descrição Completa</label>
                 <textarea
-                  rows={3}
+                  rows={8}
                   value={editingProduct.description || ''}
                   onChange={(e) =>
                     setEditingProduct({ ...editingProduct, description: e.target.value })
                   }
                   className="w-full bg-zinc-50 border border-zinc-200 rounded-xl p-2.5 text-zinc-900"
                 />
+              </div>
+
+              <div>
+                <label className="block font-semibold text-zinc-700 mb-1">Mensagem promocional (opcional)</label>
+                <input type="text" value={editingProduct.promotionMessage || ''} onChange={(e) => setEditingProduct({ ...editingProduct, promotionMessage: e.target.value })} placeholder="Ex.: Compre 1 e ganhe outro de brinde" className="w-full bg-zinc-50 border border-zinc-200 rounded-xl p-2.5 text-zinc-900" />
+                <p className="text-[10px] text-zinc-500 mt-1">Use somente quando a promoção estiver válida e a loja puder cumprir a oferta.</p>
               </div>
 
               <div className="flex gap-4 pt-2">
@@ -1090,7 +1072,6 @@ export const AdminView: React.FC = () => {
                 </button>
                 <button
                   type="submit"
-                  disabled={isUploadingImages}
                   className="px-6 py-2.5 disabled:opacity-50 bg-[#E6007A] text-white rounded-xl font-bold shadow-md hover:bg-[#D0006E]"
                 >
                   Salvar Produto

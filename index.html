@@ -1,15 +1,40 @@
 <!doctype html>
-<html lang="en">
+<html lang="pt-BR">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Casa & Beleza Express | Cosméticos, Decoração e Utilidades</title>
-    <meta name="description" content="Plataforma profissional de e-commerce de beleza, cosméticos e utilidades para o lar com pagamentos integrados e painel administrativo." />
-    <meta property="og:title" content="Casa & Beleza Express | Cosméticos, Decoração e Utilidades" />
-    <meta property="og:description" content="Plataforma profissional de e-commerce de beleza, cosméticos e utilidades para o lar com pagamentos integrados e painel administrativo." />
-    <meta property="og:type" content="website" />
-    <meta name="twitter:card" content="summary_large_image" />
+    <title>Casa &amp; Beleza Express | Beleza, Casa e Decoração</title>
+    <meta name="description" content="Encontre produtos de beleza, cosméticos, cuidados pessoais, casa e decoração na Casa &amp; Beleza Express. Confira ofertas e condições de entrega." />
+    <meta name="robots" content="index, follow, max-image-preview:large" />
     <meta name="theme-color" content="#E6007A" />
+    <link rel="canonical" href="/" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="apple-touch-icon" href="/favicon.svg" />
+    <meta property="og:locale" content="pt_BR" />
+    <meta property="og:site_name" content="Casa &amp; Beleza Express" />
+    <meta property="og:title" content="Casa &amp; Beleza Express | Beleza, Casa e Decoração" />
+    <meta property="og:description" content="Produtos de beleza, cosméticos, cuidados pessoais, casa e decoração. Confira nossas ofertas." />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="/" />
+    <meta property="og:image" content="/og-casa-beleza.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="Casa &amp; Beleza Express — beleza, casa e decoração" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Casa &amp; Beleza Express | Beleza, Casa e Decoração" />
+    <meta name="twitter:description" content="Produtos de beleza, cosméticos, cuidados pessoais, casa e decoração. Confira nossas ofertas." />
+    <meta name="twitter:image" content="/og-casa-beleza.png" />
+    <script>
+      (function () {
+        var origin = window.location.origin;
+        var canonical = document.querySelector('link[rel="canonical"]');
+        if (canonical) canonical.href = origin + window.location.pathname;
+        ['og:url', 'og:image', 'twitter:image'].forEach(function (key) {
+          var node = document.querySelector('meta[property="' + key + '"], meta[name="' + key + '"]');
+          if (node && node.content.charAt(0) === '/') node.content = origin + node.content;
+        });
+      })();
+    </script>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Playfair+Display:ital,wght@0,600;0,700;1,600&display=swap" rel="stylesheet" />
@@ -19,4 +44,3 @@
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
-

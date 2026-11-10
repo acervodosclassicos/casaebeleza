@@ -1,6 +1,7 @@
 import express, { Request, Response } from 'express';
 import dotenv from 'dotenv';
 import path from 'path';
+import { readFile } from 'node:fs/promises';
 import { fileURLToPath } from 'url';
 
 dotenv.config();
@@ -81,6 +82,25 @@ app.post('/api/contact', (req: Request, res: Response) => {
     success: true,
     message: 'Sua mensagem foi recebida com sucesso! Responderemos em até 24 horas úteis.',
   });
+});
+
+// Resolve canonical and Open Graph URLs from the real production host.
+app.use(async (req: Request, res: Response, next) => {
+  if (!isProduction || req.method !== 'GET' || !req.headers.accept?.includes('text/html')) return next();
+  try {
+    const htmlPath = path.resolve(__dirname, 'dist', 'index.html');
+    const html = await readFile(htmlPath, 'utf8');
+    const origin = `${req.protocol}://${req.get('host')}`;
+    const pageUrl = `${origin}${req.originalUrl.split('?')[0]}`;
+    const rendered = html
+      .replace('<link rel="canonical" href="/" />', `<link rel="canonical" href="${pageUrl}" />`)
+      .replace('<meta property="og:url" content="/" />', `<meta property="og:url" content="${pageUrl}" />`)
+      .replace('<meta property="og:image" content="/og-casa-beleza.png" />', `<meta property="og:image" content="${origin}/og-casa-beleza.png" />`)
+      .replace('<meta name="twitter:image" content="/og-casa-beleza.png" />', `<meta name="twitter:image" content="${origin}/og-casa-beleza.png" />`);
+    res.type('html').send(rendered);
+  } catch (error) {
+    next(error);
+  }
 });
 
 // Dynamic robots.txt

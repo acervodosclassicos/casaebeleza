@@ -1,5 +1,5 @@
 import React from 'react';
-import { Heart, ShoppingBag, Zap, Sparkles, Truck } from 'lucide-react';
+import { Heart, ShoppingBag, Zap, Sparkles, Truck, Star } from 'lucide-react';
 import { Product } from '../types';
 import { useStore } from '../context/StoreContext';
 import { formatBRL, calculateDiscountPercentage } from '../utils/shop-logic';
@@ -96,6 +96,17 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, onSelect }) =
           <h3 className="font-semibold text-xs sm:text-sm text-zinc-900 group-hover:text-[#E6007A] transition-colors line-clamp-2 leading-snug mb-2 min-h-[2.5rem]">
             {product.title}
           </h3>
+
+          <div className="flex items-center gap-1.5 mb-2 text-[10px] sm:text-[11px]">
+            <span className="inline-flex items-center gap-0.5 text-amber-500" aria-label="Produto em destaque na loja">
+              {[0, 1, 2, 3, 4].map((star) => (
+                <Star key={star} className="w-3 h-3 fill-current" />
+              ))}
+            </span>
+            <span className="font-semibold text-zinc-600">Destaque da loja</span>
+            <span className="text-zinc-300">•</span>
+            <span className="text-zinc-500">{Math.max(0, product.salesCount || 0)} vendidos</span>
+          </div>
         </div>
 
         {/* Pricing & Free Shipping & CTA */}

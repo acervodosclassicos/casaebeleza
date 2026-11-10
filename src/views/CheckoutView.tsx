@@ -415,13 +415,18 @@ export const CheckoutView: React.FC<CheckoutViewProps> = ({ onNavigate }) => {
                   onChange={() => setPaymentMethod('pix')}
                   className="mt-1 text-[#E6007A] focus:ring-[#E6007A]"
                 />
-                <div className="text-xs">
+                <div className="flex items-start gap-3 text-xs">
+                  <svg viewBox="0 0 32 32" className="w-7 h-7 shrink-0 text-[#32BCAD]" aria-label="Pix" role="img">
+                    <path fill="currentColor" d="M11.1 4.7 16 9.6l4.9-4.9a4.5 4.5 0 0 1 6.4 0l.1.1-8.2 8.2a4.5 4.5 0 0 1-6.4 0L4.6 4.8l.1-.1a4.5 4.5 0 0 1 6.4 0ZM4.6 27.2l8.2-8.2a4.5 4.5 0 0 1 6.4 0l8.2 8.2-.1.1a4.5 4.5 0 0 1-6.4 0L16 22.4l-4.9 4.9a4.5 4.5 0 0 1-6.4 0l-.1-.1ZM2.7 6.7l8.2 8.2a1.5 1.5 0 0 1 0 2.1l-8.2 8.2a4.5 4.5 0 0 1 0-18.5Zm26.6 0a4.5 4.5 0 0 1 0 18.5l-8.2-8.2a1.5 1.5 0 0 1 0-2.1l8.2-8.2Z"/>
+                  </svg>
+                  <div>
                   <div className="font-bold text-zinc-900">
                     PIX Instantâneo
                   </div>
                   <p className="text-zinc-500 mt-1">
                     Aprovação imediata e separação prioritária do seu pacote.
                   </p>
+                  </div>
                 </div>
               </label>
             </div>

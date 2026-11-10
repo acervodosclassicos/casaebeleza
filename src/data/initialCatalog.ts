@@ -88,6 +88,8 @@ export const INITIAL_SETTINGS: StoreSettings = {
   seoTitle: 'Casa & Beleza Express | Cosméticos, Cuidados e Decoração',
   seoDescription: 'Produtos de beleza, cuidados pessoais, casa e decoração. Frete grátis em compras a partir de R$ 49,99.',
   ogImageUrl: '',
+  cnpj: '',
+  businessAddress: '',
 };
 
 export const INITIAL_PRODUCTS: Product[] = [];

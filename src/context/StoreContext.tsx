@@ -13,6 +13,7 @@ import {
   orderBy,
   serverTimestamp,
   onSnapshot,
+  runTransaction,
 } from 'firebase/firestore';
 import { db, auth, handleFirestoreError, OperationType, testFirestoreConnection } from '../lib/firebase';
 import {
@@ -268,7 +269,6 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       }
     });
 
-    showToast(`"${product.title}" adicionado à sacola!`, 'success');
     setIsCartOpen(true);
   };
 
@@ -459,10 +459,60 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
   const updateOrderStatus = async (orderId: string, status: Order['status']) => {
     try {
-      await updateDoc(doc(db, 'orders', orderId), {
-        status,
-        updatedAt: serverTimestamp(),
-      });
+      if (status === 'pagamento_aprovado') {
+        let orderItemsForCounter: Order['items'] = [];
+        const salesApplied = await runTransaction(db, async (transaction) => {
+          const orderRef = doc(db, 'orders', orderId);
+          const orderSnap = await transaction.get(orderRef);
+          if (!orderSnap.exists()) throw new Error('Pedido não encontrado.');
+
+          const orderData = orderSnap.data() as Order;
+          // A same order must never add its items to the sales counter twice.
+          if (orderData.salesCountApplied) return false;
+
+          const items = orderData.items || [];
+          orderItemsForCounter = items;
+          const quantitiesByProduct = items.reduce((totals, item) => {
+            totals[item.productId] = (totals[item.productId] || 0) + Math.max(0, Number(item.quantity || 0));
+            return totals;
+          }, {} as Record<string, number>);
+          const productIds = Object.keys(quantitiesByProduct);
+          const productRefs = productIds.map((productId) => doc(db, 'products', productId));
+          const productSnaps = await Promise.all(
+            productRefs.map((productRef) => transaction.get(productRef))
+          );
+
+          productSnaps.forEach((productSnap, index) => {
+            if (!productSnap.exists()) return;
+            const quantity = quantitiesByProduct[productIds[index]] || 0;
+            const currentSales = Math.max(0, Number(productSnap.data().salesCount || 0));
+            transaction.update(productSnap.ref, { salesCount: currentSales + quantity });
+          });
+
+          transaction.update(orderRef, {
+            status,
+            salesCountApplied: true,
+            updatedAt: serverTimestamp(),
+          });
+          return true;
+        });
+        if (salesApplied) {
+          const quantitiesByProduct = (orderItemsForCounter || []).reduce((totals, item) => {
+            totals[item.productId] = (totals[item.productId] || 0) + Math.max(0, Number(item.quantity || 0));
+            return totals;
+          }, {} as Record<string, number>);
+          setProducts((current) => current.map((product) => (
+            quantitiesByProduct[product.id]
+              ? { ...product, salesCount: Math.max(0, product.salesCount || 0) + quantitiesByProduct[product.id] }
+              : product
+          )));
+        }
+      } else {
+        await updateDoc(doc(db, 'orders', orderId), {
+          status,
+          updatedAt: serverTimestamp(),
+        });
+      }
       showToast(`Status do pedido atualizado para "${status}".`, 'success');
     } catch (error) {
       handleFirestoreError(error, OperationType.UPDATE, `orders/${orderId}`);

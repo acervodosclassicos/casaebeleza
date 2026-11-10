@@ -1,0 +1,13 @@
+{
+  "rewrites": [
+    {
+      "source": "/produto/:id",
+      "destination": "/api/product-og?id=:id"
+    }
+  ],
+  "functions": {
+    "api/product-og.ts": {
+      "includeFiles": "dist/**"
+    }
+  }
+}

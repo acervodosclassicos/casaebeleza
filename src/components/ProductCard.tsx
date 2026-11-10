@@ -100,12 +100,12 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, onSelect }) =
           <div className="flex items-center gap-1.5 mb-2 text-[10px] sm:text-[11px]">
             <span className="inline-flex items-center gap-0.5 text-amber-500" aria-label="Produto em destaque na loja">
               {[0, 1, 2, 3, 4].map((star) => (
-                <Star key={star} className="w-3 h-3 fill-current" />
+                <Star key={star} className={`w-3 h-3 ${star < Math.round(product.rating ?? 0) ? 'fill-current' : 'fill-none text-zinc-300'}`} />
               ))}
             </span>
-            <span className="font-semibold text-zinc-600">Destaque da loja</span>
+            <span className="font-semibold text-zinc-600">{Number(product.rating || 0) > 0 ? Number(product.rating).toFixed(1) : 'Sem nota'}</span>
             <span className="text-zinc-300">•</span>
-            <span className="text-zinc-500">{Math.max(0, product.salesCount || 0)} vendidos</span>
+            <span className="text-zinc-500">{Math.max(0, Number(product.salesCount || 0))} vendidos</span>
           </div>
         </div>
 

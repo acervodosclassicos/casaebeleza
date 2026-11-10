@@ -85,6 +85,7 @@ interface StoreContextType {
   getAllReviews: () => Promise<Review[]>;
   getPublishedReviews: () => Promise<Review[]>;
   submitProductReview: (review: Omit<Review, 'id' | 'status' | 'createdAt'>) => Promise<void>;
+  createAdminReview: (review: Omit<Review, 'id' | 'createdAt'>) => Promise<void>;
   updateReviewStatus: (reviewId: string, status: 'approved' | 'rejected', reply?: string) => Promise<void>;
   // Products Admin CRUD
   saveProduct: (product: Product) => Promise<void>;
@@ -406,14 +407,16 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   };
 
   const getProductById = async (productId: string): Promise<Product | null> => {
-    const cached = products.find((item) => item.id === productId);
-    if (cached) return cached;
+    // Fetch the document directly so a deep link never has to wait for the full catalog.
+    // The in-memory catalog is only a fallback for offline/missing-document cases.
+    const cached = products.find((item) => item.id === productId) || null;
     try {
       const snap = await getDoc(doc(db, 'products', productId));
-      return snap.exists() ? ({ id: snap.id, ...(snap.data() as Omit<Product, 'id'>) }) : null;
+      if (snap.exists()) return { id: snap.id, ...(snap.data() as Omit<Product, 'id'>) };
+      return cached;
     } catch (err) {
-      console.warn('Product lookup error:', err);
-      return null;
+      console.warn('Product lookup error; using cached product when available:', err);
+      return cached;
     }
   };
 
@@ -609,6 +612,18 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       showToast('Obrigado! Sua avaliação foi enviada e será publicada após moderação.', 'success');
     } catch (err) {
       handleFirestoreError(err, OperationType.CREATE, `reviews/${reviewId}`);
+    }
+  };
+
+  const createAdminReview = async (review: Omit<Review, 'id' | 'createdAt'>) => {
+    if (!auth.currentUser || !isAdmin) throw new Error('Apenas administradores podem cadastrar feedbacks.');
+    const reviewId = `rev_admin_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
+    try {
+      await setDoc(doc(db, 'reviews', reviewId), { ...review, createdAt: new Date().toISOString() });
+      showToast('Feedback cadastrado com sucesso!', 'success');
+    } catch (err) {
+      handleFirestoreError(err, OperationType.CREATE, `reviews/${reviewId}`);
+      throw err;
     }
   };
 
@@ -819,6 +834,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         getAllReviews,
         getPublishedReviews,
         submitProductReview,
+        createAdminReview,
         updateReviewStatus,
         saveProduct,
         deleteProduct,

@@ -46,6 +46,7 @@ export const AdminView: React.FC = () => {
     deleteBanner,
     updateSettings,
     getAllReviews,
+    createAdminReview,
     updateReviewStatus,
     seedCatalog,
     showToast,
@@ -62,6 +63,9 @@ export const AdminView: React.FC = () => {
   // Product Editing / Creation modal
   const [editingProduct, setEditingProduct] = useState<Partial<Product> | null>(null);
   const [isProductModalOpen, setIsProductModalOpen] = useState(false);
+  const [feedbackName, setFeedbackName] = useState('');
+  const [feedbackComment, setFeedbackComment] = useState('');
+  const [feedbackRating, setFeedbackRating] = useState(5);
 
   // Order Details Modal
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
@@ -148,6 +152,9 @@ export const AdminView: React.FC = () => {
 
   // Product CRUD
   const handleOpenNewProduct = () => {
+    setFeedbackName('');
+    setFeedbackComment('');
+    setFeedbackRating(5);
     setEditingProduct({
       id: `prod_${Date.now()}`,
       title: '',
@@ -169,6 +176,9 @@ export const AdminView: React.FC = () => {
       isNew: true,
       externalPaymentLink: '',
       variations: [],
+      rating: 5,
+      reviewCount: 0,
+      salesCount: 0,
     });
     setIsProductModalOpen(true);
   };
@@ -208,8 +218,13 @@ export const AdminView: React.FC = () => {
       flashDeal: Boolean(editingProduct.flashDeal),
       isNew: Boolean(editingProduct.isNew),
       active: Boolean(editingProduct.active ?? true),
+      freeShipping: Boolean(editingProduct.freeShipping),
+      displayOrder: editingProduct.displayOrder,
       externalPaymentLink: editingProduct.externalPaymentLink || '',
       promotionMessage: editingProduct.promotionMessage || '',
+      rating: Math.min(5, Math.max(0, Number(editingProduct.rating ?? 5) || 0)),
+      reviewCount: Math.max(0, Number(editingProduct.reviewCount) || 0),
+      salesCount: Math.max(0, Number(editingProduct.salesCount) || 0),
       variations: (editingProduct.variations || []).filter((v) => v.name.trim() && v.options.length > 0),
       createdAt: editingProduct.createdAt || new Date().toISOString(),
       updatedAt: new Date().toISOString(),
@@ -525,6 +540,9 @@ export const AdminView: React.FC = () => {
                       <td className="py-3 px-4 text-right space-x-2">
                         <button
                           onClick={() => {
+                            setFeedbackName('');
+                            setFeedbackComment('');
+                            setFeedbackRating(5);
                             setEditingProduct(p);
                             setIsProductModalOpen(true);
                           }}
@@ -952,6 +970,31 @@ export const AdminView: React.FC = () => {
                     required
                   />
                 </div>
+              </div>
+
+              <div className="rounded-2xl border border-amber-200 bg-amber-50/60 p-4 space-y-3">
+                <h4 className="font-bold text-zinc-900">Exibição de avaliações e vendas</h4>
+                <p className="text-[10px] text-zinc-600">Defina a nota exibida e o contador inicial de vendas. Vendas confirmadas continuarão sendo somadas automaticamente.</p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="block font-semibold text-zinc-700 mb-1">Nota em estrelas (0 a 5)</label>
+                    <select value={editingProduct.rating ?? 5} onChange={(e) => setEditingProduct({ ...editingProduct, rating: Number(e.target.value) })} className="w-full bg-white border border-zinc-200 rounded-xl p-2.5 text-zinc-900">
+                      {[0,1,2,3,4,5].map(n => <option key={n} value={n}>{n === 0 ? 'Sem nota' : `${n} ${n === 1 ? 'estrela' : 'estrelas'}`}</option>)}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block font-semibold text-zinc-700 mb-1">Quantidade de vendas</label>
+                    <input type="number" min="0" step="1" value={editingProduct.salesCount ?? 0} onChange={(e) => setEditingProduct({ ...editingProduct, salesCount: Math.max(0, Number(e.target.value)) })} className="w-full bg-white border border-zinc-200 rounded-xl p-2.5 text-zinc-900" />
+                  </div>
+                </div>
+              </div>
+
+              <div className="rounded-2xl border border-pink-200 bg-pink-50/50 p-4 space-y-3">
+                <div><h4 className="font-bold text-zinc-900">Cadastrar feedback de cliente</h4><p className="text-[10px] text-zinc-600">Cadastre depoimentos reais. Eles serão publicados diretamente na página deste produto. Salve o anúncio antes de adicionar feedbacks. Se alterar o título, salve primeiro para manter o vínculo correto.</p></div>
+                <input value={feedbackName} onChange={e => setFeedbackName(e.target.value)} placeholder="Nome do cliente" className="w-full bg-white border border-zinc-200 rounded-xl p-2.5 text-zinc-900" />
+                <div className="flex items-center gap-3"><label className="font-semibold text-zinc-700">Estrelas</label><select value={feedbackRating} onChange={e => setFeedbackRating(Number(e.target.value))} className="bg-white border border-zinc-200 rounded-lg p-2">{[5,4,3,2,1].map(n => <option key={n} value={n}>{n} estrelas</option>)}</select></div>
+                <textarea rows={3} value={feedbackComment} onChange={e => setFeedbackComment(e.target.value)} placeholder="Comentário real do cliente" className="w-full bg-white border border-zinc-200 rounded-xl p-2.5 text-zinc-900" />
+                <button type="button" disabled={!feedbackName.trim() || !feedbackComment.trim() || !editingProduct.id || !products.some((product) => product.id === editingProduct.id && product.title === editingProduct.title)} onClick={async () => { try { await createAdminReview({ productId: editingProduct.id!, productName: editingProduct.title || 'Produto', authorName: feedbackName.trim(), rating: feedbackRating, comment: feedbackComment.trim(), verifiedPurchase: false, status: 'approved' }); setReviews(await getAllReviews()); setFeedbackName(''); setFeedbackComment(''); setFeedbackRating(5); } catch (error: any) { showToast(error?.message || 'Não foi possível cadastrar o feedback.', 'error'); } }} className="px-4 py-2 rounded-lg bg-[#E6007A] text-white font-bold disabled:opacity-40">+ Adicionar feedback</button>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">

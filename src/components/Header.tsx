@@ -84,7 +84,7 @@ export const Header: React.FC<HeaderProps> = ({ onNavigate }) => {
   };
 
   return (
-    <header className="sticky top-0 z-40 bg-white border-b border-pink-200/60 shadow-xs w-full overflow-x-hidden">
+    <header className="sticky top-0 z-40 bg-white border-b border-pink-200/60 shadow-xs w-full overflow-x-clip">
       {/* 1. BARRA SUPERIOR PROMOCIONAL FIXA (PADRÃO GRANDES MARKETPLACES) */}
       <div className="bg-gradient-to-r from-[#D0006E] via-[#E6007A] to-[#FF2E93] text-white py-1.5 sm:py-2 px-2.5 sm:px-4 shadow-inner">
         <div className="max-w-7xl mx-auto flex items-center justify-center text-[10px] sm:text-xs font-bold tracking-wide">

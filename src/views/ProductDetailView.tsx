@@ -48,7 +48,7 @@ export const ProductDetailView: React.FC<ProductDetailViewProps> = ({
 
   const [remoteProduct, setRemoteProduct] = useState<Product | null>(null);
   const [productLookupDone, setProductLookupDone] = useState(false);
-  const product = products.find((p) => p.id === productId) || (remoteProduct?.id === productId ? remoteProduct : null);
+  const product = (remoteProduct?.id === productId ? remoteProduct : null) || products.find((p) => p.id === productId) || null;
 
   const [selectedImage, setSelectedImage] = useState<string>(
     product?.thumbnail || (product?.images && product?.images[0]) || ''
@@ -83,16 +83,15 @@ export const ProductDetailView: React.FC<ProductDetailViewProps> = ({
     let active = true;
     setProductLookupDone(false);
     const cachedProduct = products.find((item) => item.id === productId);
-    if (cachedProduct) {
-      setRemoteProduct(cachedProduct);
+    if (cachedProduct) setRemoteProduct(cachedProduct);
+    // Always refresh this product directly from Firestore in parallel with catalog loading.
+    getProductById(productId).then((found) => {
+      if (!active) return;
+      if (found) setRemoteProduct(found);
       setProductLookupDone(true);
-    } else {
-      getProductById(productId).then((found) => {
-        if (!active) return;
-        setRemoteProduct(found);
-        setProductLookupDone(true);
-      });
-    }
+    }).catch(() => {
+      if (active) setProductLookupDone(true);
+    });
     return () => { active = false; };
   }, [productId]);
 
@@ -123,7 +122,6 @@ export const ProductDetailView: React.FC<ProductDetailViewProps> = ({
   }
 
   const discountPercent = calculateDiscountPercentage(product.price, product.compareAtPrice);
-  const averageRating = reviews.length > 0 ? reviews.reduce((sum, review) => sum + review.rating, 0) / reviews.length : 0;
   const wishlisted = isWishlisted(product.id);
 
   const images = product.images && product.images.length > 0 ? product.images : [product.thumbnail];
@@ -173,7 +171,7 @@ export const ProductDetailView: React.FC<ProductDetailViewProps> = ({
         authorName: newReviewAuthor.trim(),
         rating: newReviewRating,
         comment: newReviewComment.trim(),
-        verifiedPurchase: true,
+        verifiedPurchase: false,
       });
       setNewReviewAuthor('');
       setNewReviewComment('');
@@ -257,19 +255,21 @@ export const ProductDetailView: React.FC<ProductDetailViewProps> = ({
               {product.title}
             </h1>
 
-            {/* Shop highlight and verified sales counter */}
+            {/* Nota configurada no painel e contador de vendas */}
             <div className="flex flex-wrap items-center gap-x-3 gap-y-2 mt-3">
               <div className="inline-flex items-center gap-1.5">
-                <span className="inline-flex items-center gap-0.5 text-amber-500" aria-label="Produto em destaque na loja">
+                <span className="inline-flex items-center gap-0.5 text-amber-500" aria-label={`Nota ${Number(product.rating || 0).toFixed(1)} de 5`}>
                   {[0, 1, 2, 3, 4].map((star) => (
-                    <Star key={star} className="w-4 h-4 fill-current" />
+                    <Star key={star} className={`w-4 h-4 ${star < Math.round(product.rating || 0) ? 'fill-current' : 'fill-none text-zinc-300'}`} />
                   ))}
                 </span>
-                <span className="text-xs font-semibold text-zinc-600">Destaque da loja</span>
+                <span className="text-xs font-semibold text-zinc-600">
+                  {Number(product.rating || 0) > 0 ? `${Number(product.rating).toFixed(1)} de 5` : 'Sem avaliação'}
+                </span>
               </div>
               <span className="text-zinc-300">|</span>
               <span className="text-xs text-zinc-600 font-medium">
-                {Math.max(0, product.salesCount || 0)} vendidos
+                {Math.max(0, Number(product.salesCount || 0))} vendidos
               </span>
               <span className="text-zinc-300">|</span>
               <span className="inline-flex items-center gap-1 text-xs font-semibold text-emerald-600">

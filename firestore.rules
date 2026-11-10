@@ -88,7 +88,7 @@ service cloud.firestore {
       allow list: if resource.data.status == 'approved' || isAdmin();
       allow create: if isValidId(reviewId) &&
         incoming().rating >= 1 && incoming().rating <= 5 &&
-        (incoming().status == 'pending' || isAdmin());
+        (isAdmin() || (incoming().status == 'pending' && incoming().verifiedPurchase == false));
       allow update, delete: if isValidId(reviewId) && isAdmin();
     }
 

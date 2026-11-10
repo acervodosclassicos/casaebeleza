@@ -37,6 +37,7 @@ export const ProductDetailView: React.FC<ProductDetailViewProps> = ({
 }) => {
   const {
     products,
+    getProductById,
     addToCart,
     isWishlisted,
     toggleWishlist,
@@ -45,7 +46,9 @@ export const ProductDetailView: React.FC<ProductDetailViewProps> = ({
     showToast,
   } = useStore();
 
-  const product = products.find((p) => p.id === productId) || products[0];
+  const [remoteProduct, setRemoteProduct] = useState<Product | null>(null);
+  const [productLookupDone, setProductLookupDone] = useState(false);
+  const product = products.find((p) => p.id === productId) || (remoteProduct?.id === productId ? remoteProduct : null);
 
   const [selectedImage, setSelectedImage] = useState<string>(
     product?.thumbnail || (product?.images && product?.images[0]) || ''
@@ -77,12 +80,33 @@ export const ProductDetailView: React.FC<ProductDetailViewProps> = ({
   const [isSubmittingReview, setIsSubmittingReview] = useState(false);
 
   useEffect(() => {
+    let active = true;
+    setProductLookupDone(false);
+    const cachedProduct = products.find((item) => item.id === productId);
+    if (cachedProduct) {
+      setRemoteProduct(cachedProduct);
+      setProductLookupDone(true);
+    } else {
+      getProductById(productId).then((found) => {
+        if (!active) return;
+        setRemoteProduct(found);
+        setProductLookupDone(true);
+      });
+    }
+    return () => { active = false; };
+  }, [productId]);
+
+  useEffect(() => {
     if (product) {
       setSelectedImage(product.thumbnail || (product.images && product.images[0]) || '');
       setSelectedVariations(Object.fromEntries((product.variations || []).map((variation) => [variation.name, variation.options[0] || ''])));
       getProductReviews(product.id).then(setReviews);
     }
   }, [product?.id]);
+
+  if (!product && !productLookupDone) {
+    return <div className="max-w-7xl mx-auto px-4 py-20 text-center text-sm text-zinc-500">Carregando anúncio...</div>;
+  }
 
   if (!product) {
     return (

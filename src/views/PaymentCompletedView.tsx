@@ -53,11 +53,22 @@ export const PaymentCompletedView: React.FC<PaymentCompletedViewProps> = ({
 
   if (!order) {
     return (
-      <div className="max-w-xl mx-auto px-4 py-20 text-center space-y-4">
-        <div className="w-16 h-16 mx-auto rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center"><Package className="w-8 h-8" /></div>
-        <h1 className="text-2xl font-black text-zinc-900">Não encontramos este pedido</h1>
-        <p className="text-sm text-zinc-500">Não foi possível carregar os dados do pedido. Volte à loja e consulte o histórico da sua conta ou fale com o atendimento.</p>
-        <button onClick={() => onNavigate('home')} className="px-6 py-3 rounded-xl bg-[#E6007A] text-white font-bold">Voltar à loja</button>
+      <div className="min-h-[65vh] flex items-center justify-center px-4 py-14">
+        <div className="w-full max-w-2xl overflow-hidden rounded-3xl border border-pink-100 bg-white text-center shadow-xl">
+          <div className="bg-gradient-to-r from-[#E6007A] to-[#FF4D9E] px-6 py-12 text-white">
+            <div className="mx-auto mb-5 flex h-20 w-20 items-center justify-center rounded-full bg-white/20">
+              <Package className="h-11 w-11" />
+            </div>
+            <span className="rounded-full bg-white/20 px-3 py-1 text-[11px] font-black tracking-widest">PAGAMENTO</span>
+            <h1 className="mt-4 text-3xl font-black sm:text-4xl">Estamos preparando seu pacote</h1>
+            <p className="mx-auto mt-3 max-w-lg text-sm leading-relaxed text-pink-50">Obrigado pela sua compra! Estamos organizando as próximas etapas do seu pedido. Você poderá acompanhar a entrega assim que as informações de rastreio estiverem disponíveis.</p>
+          </div>
+          <div className="space-y-4 p-7">
+            <div className="flex items-center justify-center gap-2 text-sm font-semibold text-emerald-700"><CheckCircle2 className="h-5 w-5" /> Retorno do pagamento recebido</div>
+            <p className="text-xs leading-relaxed text-zinc-500">Se o pagamento acabou de ser realizado, a atualização do pedido pode levar alguns instantes. Guarde o comprovante enviado pelo seu gateway.</p>
+            <button onClick={() => onNavigate('home')} className="rounded-xl bg-[#E6007A] px-7 py-3 font-bold text-white hover:bg-[#C90069]">Voltar à loja</button>
+          </div>
+        </div>
       </div>
     );
   }
@@ -78,13 +89,13 @@ export const PaymentCompletedView: React.FC<PaymentCompletedViewProps> = ({
             <Clock className="w-10 h-10" />
           </div>
           <span className="text-xs font-bold uppercase tracking-widest bg-white/20 px-3 py-1 rounded-full">
-            PEDIDO REGISTRADO
+            PAGAMENTO RECEBIDO
           </span>
           <h1 className="text-2xl sm:text-4xl font-black tracking-tight">
-            Falta concluir o pagamento
+            Estamos preparando seu pacote
           </h1>
           <p className="text-xs sm:text-sm text-pink-100 max-w-xl mx-auto leading-relaxed">
-            Seu pedido foi registrado. Para confirmar a compra, conclua o pagamento pelo ambiente seguro do gateway. A separação do produto começa após a confirmação.
+            Obrigado pela sua compra! Estamos organizando seu pedido para preparar o pacote. Você poderá acompanhar as atualizações de envio nesta página ou pela área de pedidos.
           </p>
         </div>
 
@@ -121,29 +132,6 @@ export const PaymentCompletedView: React.FC<PaymentCompletedViewProps> = ({
               </span>
             </div>
           </div>
-
-          {/* Payment action: primary, prominent and easy to tap */}
-          {order?.paymentExternalLink && (
-            <section className="rounded-3xl border-2 border-[#E6007A]/25 bg-gradient-to-br from-pink-50 via-white to-pink-50 p-5 sm:p-7 text-center space-y-3 shadow-sm">
-              <div className="mx-auto w-14 h-14 rounded-2xl bg-[#E6007A] text-white flex items-center justify-center shadow-lg shadow-pink-200">
-                <ShieldCheck className="w-7 h-7" />
-              </div>
-              <div className="space-y-1">
-                <h2 className="text-xl sm:text-2xl font-black text-zinc-900">Conclua seu pagamento agora</h2>
-                <p className="text-sm text-zinc-600 max-w-lg mx-auto">Você será direcionado ao ambiente oficial de pagamento configurado pela loja. Confira o valor antes de confirmar.</p>
-              </div>
-              <a
-                href={order.paymentExternalLink}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="w-full sm:max-w-md mx-auto min-h-[58px] px-6 py-4 bg-[#E6007A] hover:bg-[#C90069] active:scale-[.99] text-white rounded-2xl text-base sm:text-lg font-black transition-all shadow-lg shadow-pink-200 flex items-center justify-center gap-3"
-              >
-                <span>IR PARA PAGAMENTO</span>
-                <ExternalLink className="w-5 h-5" />
-              </a>
-              <p className="text-[11px] text-zinc-500">O pedido só será considerado pago após a confirmação do gateway.</p>
-            </section>
-          )}
 
           {/* Items Summary */}
           {order?.items && order.items.length > 0 && (

@@ -74,6 +74,8 @@ interface StoreContextType {
   // Orders
   createOrder: (orderData: Partial<Order>) => Promise<Order>;
   getOrderById: (orderId: string) => Promise<Order | null>;
+  deleteOrder: (orderId: string) => Promise<void>;
+  getProductById: (productId: string) => Promise<Product | null>;
   getUserOrders: () => Promise<Order[]>;
   getAllOrders: () => Promise<Order[]>;
   updateOrderStatus: (orderId: string, status: Order['status']) => Promise<void>;
@@ -173,33 +175,34 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
     const fetchInitialData = async () => {
       try {
-        // Fetch products from Firestore
-        const prodsSnap = await getDocs(collection(db, 'products'));
-        if (!prodsSnap.empty && isMounted) {
-          const list: Product[] = [];
-          prodsSnap.forEach((doc) => {
-            list.push({ id: doc.id, ...(doc.data() as Omit<Product, 'id'>) });
-          });
+        // Run independent reads concurrently so the catalog does not wait for
+        // banners/settings requests to finish one after another.
+        const [prodsSnap, bannerSnap, settingsDoc] = await Promise.all([
+          getDocs(collection(db, 'products')),
+          getDocs(collection(db, 'banners')),
+          getDoc(doc(db, 'settings', 'store_config')),
+        ]);
+        if (!isMounted) return;
+
+        if (!prodsSnap.empty) {
+          const list: Product[] = prodsSnap.docs.map((item) => ({
+            id: item.id,
+            ...(item.data() as Omit<Product, 'id'>),
+          }));
           setProducts(list);
-        } else if (prodsSnap.empty) {
-          // Keep INITIAL_PRODUCTS in state
+        } else {
           setProducts(INITIAL_PRODUCTS);
         }
 
-        // Fetch banners
-        const bannerSnap = await getDocs(collection(db, 'banners'));
-        if (!bannerSnap.empty && isMounted) {
-          const bannerList: Banner[] = [];
-          bannerSnap.forEach((doc) => {
-            bannerList.push({ id: doc.id, ...(doc.data() as Omit<Banner, 'id'>) });
-          });
+        if (!bannerSnap.empty) {
+          const bannerList: Banner[] = bannerSnap.docs.map((item) => ({
+            id: item.id,
+            ...(item.data() as Omit<Banner, 'id'>),
+          }));
           bannerList.sort((a, b) => (a.order || 0) - (b.order || 0));
           setBanners(bannerList);
         }
-
-        // Fetch settings
-        const settingsDoc = await getDoc(doc(db, 'settings', 'store_config'));
-        if (settingsDoc.exists() && isMounted) {
+        if (settingsDoc.exists()) {
           setSettings({ id: 'store_config', ...(settingsDoc.data() as Omit<StoreSettings, 'id'>) });
         }
       } catch (err) {
@@ -208,7 +211,6 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         if (isMounted) setLoading(false);
       }
     };
-
     fetchInitialData();
     return () => {
       isMounted = false;
@@ -403,6 +405,18 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     return newOrder;
   };
 
+  const getProductById = async (productId: string): Promise<Product | null> => {
+    const cached = products.find((item) => item.id === productId);
+    if (cached) return cached;
+    try {
+      const snap = await getDoc(doc(db, 'products', productId));
+      return snap.exists() ? ({ id: snap.id, ...(snap.data() as Omit<Product, 'id'>) }) : null;
+    } catch (err) {
+      console.warn('Product lookup error:', err);
+      return null;
+    }
+  };
+
   const getOrderById = async (orderId: string): Promise<Order | null> => {
     // Check in-memory cache first
     const cached = recentOrders.find(
@@ -454,6 +468,17 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     } catch (err) {
       console.warn('Error fetching all orders:', err);
       return [];
+    }
+  };
+
+  const deleteOrder = async (orderId: string) => {
+    try {
+      await deleteDoc(doc(db, 'orders', orderId));
+      setRecentOrders((prev) => prev.filter((item) => item.id !== orderId));
+      showToast('Pedido excluído com sucesso.', 'success');
+    } catch (err) {
+      handleFirestoreError(err, OperationType.DELETE, `orders/${orderId}`);
+      throw err;
     }
   };
 
@@ -784,6 +809,8 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         isWishlisted,
         createOrder,
         getOrderById,
+        deleteOrder,
+        getProductById,
         getUserOrders,
         getAllOrders,
         updateOrderStatus,

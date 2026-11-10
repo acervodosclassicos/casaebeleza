@@ -37,6 +37,7 @@ export const AdminView: React.FC = () => {
     banners,
     settings,
     getAllOrders,
+    deleteOrder,
     updateOrderStatus,
     updateTrackingCode,
     saveProduct,
@@ -590,7 +591,7 @@ export const AdminView: React.FC = () => {
                     <th className="py-3 px-4">Total</th>
                     <th className="py-3 px-4">Status</th>
                     <th className="py-3 px-4">Rastreio</th>
-                    <th className="py-3 px-4 text-right">Alterar Status</th>
+                    <th className="py-3 px-4 text-right">Ações</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-zinc-100">
@@ -644,6 +645,24 @@ export const AdminView: React.FC = () => {
                             <option value="entregue">Entregue</option>
                             <option value="cancelado">Cancelado</option>
                           </select>
+                          <button
+                            type="button"
+                            title="Excluir pedido"
+                            aria-label={`Excluir pedido ${o.orderNumber}`}
+                            onClick={async () => {
+                              if (!window.confirm(`Tem certeza que deseja excluir o pedido ${o.orderNumber}? Esta ação não pode ser desfeita.`)) return;
+                              try {
+                                await deleteOrder(o.id);
+                                setOrders((current) => current.filter((item) => item.id !== o.id));
+                                if (selectedOrder?.id === o.id) setSelectedOrder(null);
+                              } catch (error) {
+                                console.error('Could not delete order:', error);
+                              }
+                            }}
+                            className="ml-2 inline-flex items-center justify-center p-2 rounded-lg text-red-600 hover:bg-red-50"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
                         </td>
                       </tr>
                     );

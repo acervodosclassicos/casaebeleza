@@ -27,7 +27,7 @@ function StoreApp() {
     const searchParams = new URLSearchParams(window.location.search);
     const orderId = searchParams.get('orderId');
 
-    if (path === 'pagamento-concluido' || orderId) {
+    if (path === 'pagamento-concluido' || path === 'pagamento-confirmado' || orderId) {
       return { view: 'pagamento-concluido', param: orderId || '' };
     }
     if (path === 'catalogo') return { view: 'catalogo', param: '' };
@@ -58,7 +58,8 @@ function StoreApp() {
     let newPath = '/';
     if (view === 'home') newPath = '/';
     else if (view === 'produto' && param) newPath = `/produto/${param}`;
-    else if (view === 'pagamento-concluido' && param) newPath = `/pagamento-concluido?orderId=${param}`;
+    else if (view === 'pagamento-concluido' && param) newPath = `/pagamento-confirmado?orderId=${param}`;
+    else if (view === 'pagamento-concluido') newPath = '/pagamento-confirmado';
     else newPath = `/${view}`;
 
     window.history.pushState({}, '', newPath);

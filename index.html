@@ -7,7 +7,6 @@
     <meta name="description" content="Encontre produtos de beleza, cosméticos, cuidados pessoais, casa e decoração na Casa &amp; Beleza Express. Confira ofertas e condições de entrega." />
     <meta name="robots" content="index, follow, max-image-preview:large" />
     <meta name="theme-color" content="#E6007A" />
-    <link rel="canonical" href="/" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="apple-touch-icon" href="/favicon.svg" />
     <meta property="og:locale" content="pt_BR" />
@@ -27,8 +26,10 @@
     <script>
       (function () {
         var origin = window.location.origin;
-        var canonical = document.querySelector('link[rel="canonical"]');
-        if (canonical) canonical.href = origin + window.location.pathname;
+        var canonical = document.createElement('link');
+        canonical.rel = 'canonical';
+        canonical.href = origin + window.location.pathname;
+        document.head.appendChild(canonical);
         ['og:url', 'og:image', 'twitter:image'].forEach(function (key) {
           var node = document.querySelector('meta[property="' + key + '"], meta[name="' + key + '"]');
           if (node && node.content.charAt(0) === '/') node.content = origin + node.content;

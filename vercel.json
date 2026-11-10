@@ -3,6 +3,10 @@
     {
       "source": "/produto/:id",
       "destination": "/api/product-og?id=:id"
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
     }
   ],
   "functions": {

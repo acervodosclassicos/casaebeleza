@@ -167,6 +167,7 @@ export const AdminView: React.FC = () => {
       flashDeal: false,
       isNew: true,
       externalPaymentLink: '',
+      variations: [],
     });
     setIsProductModalOpen(true);
   };
@@ -208,6 +209,7 @@ export const AdminView: React.FC = () => {
       active: Boolean(editingProduct.active ?? true),
       externalPaymentLink: editingProduct.externalPaymentLink || '',
       promotionMessage: editingProduct.promotionMessage || '',
+      variations: (editingProduct.variations || []).filter((v) => v.name.trim() && v.options.length > 0),
       createdAt: editingProduct.createdAt || new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     };
@@ -873,9 +875,9 @@ export const AdminView: React.FC = () => {
 
       {/* PRODUCT CREATE/EDIT MODAL */}
       {isProductModalOpen && editingProduct && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs overflow-y-auto">
-          <div className="w-full max-w-2xl bg-white rounded-3xl shadow-2xl p-6 sm:p-8 border border-zinc-100 my-8">
-            <h3 className="text-lg font-black text-zinc-900 border-b border-zinc-100 pb-3 mb-4">
+        <div className="fixed inset-0 z-50 flex items-start justify-center p-2 sm:p-4 bg-black/60 backdrop-blur-xs overflow-y-auto">
+          <div className="w-full max-w-2xl max-h-[calc(100dvh-1rem)] sm:max-h-[calc(100dvh-2rem)] overflow-y-auto overscroll-contain bg-white rounded-3xl shadow-2xl p-4 sm:p-8 border border-zinc-100 my-auto">
+            <h3 className="sticky top-0 z-10 -mx-4 sm:-mx-8 px-4 sm:px-8 py-3 bg-white/95 backdrop-blur border-b border-zinc-100 mb-4 text-lg font-black text-zinc-900">
               {editingProduct.title ? 'Editar Anúncio' : 'Novo Produto'}
             </h3>
 
@@ -960,6 +962,30 @@ export const AdminView: React.FC = () => {
                     className="w-full bg-zinc-50 border border-zinc-200 rounded-xl p-2.5 text-zinc-900"
                   />
                 </div>
+              </div>
+
+              <div className="rounded-2xl border border-pink-200 bg-pink-50/50 p-4 space-y-3">
+                <div className="flex items-center justify-between gap-3">
+                  <div>
+                    <h4 className="font-bold text-zinc-900">Variações do produto</h4>
+                    <p className="text-[10px] text-zinc-500">Cadastre opções como tamanho, cor, modelo ou fragrância.</p>
+                  </div>
+                  <button type="button" onClick={() => setEditingProduct({ ...editingProduct, variations: [...(editingProduct.variations || []), { name: '', options: [] }] })} className="shrink-0 px-3 py-2 rounded-lg bg-[#E6007A] text-white text-[11px] font-bold">+ Adicionar variação</button>
+                </div>
+                {(editingProduct.variations || []).map((variation, index) => (
+                  <div key={index} className="grid grid-cols-1 sm:grid-cols-[1fr_2fr_auto] gap-2 items-end bg-white rounded-xl border border-zinc-200 p-3">
+                    <div>
+                      <label className="block text-[10px] font-semibold text-zinc-600 mb-1">Nome (ex.: Tamanho)</label>
+                      <input type="text" value={variation.name} onChange={(e) => { const variations = [...(editingProduct.variations || [])]; variations[index] = { ...variations[index], name: e.target.value }; setEditingProduct({ ...editingProduct, variations }); }} placeholder="Tamanho" className="w-full bg-zinc-50 border border-zinc-200 rounded-lg p-2 text-zinc-900" />
+                    </div>
+                    <div>
+                      <label className="block text-[10px] font-semibold text-zinc-600 mb-1">Opções (separe por vírgula)</label>
+                      <input type="text" value={variation.options.join(', ')} onChange={(e) => { const variations = [...(editingProduct.variations || [])]; variations[index] = { ...variations[index], options: e.target.value.split(',').map((option) => option.trim()).filter(Boolean) }; setEditingProduct({ ...editingProduct, variations }); }} placeholder="P, M, G, GG" className="w-full bg-zinc-50 border border-zinc-200 rounded-lg p-2 text-zinc-900" />
+                    </div>
+                    <button type="button" onClick={() => setEditingProduct({ ...editingProduct, variations: (editingProduct.variations || []).filter((_, i) => i !== index) })} className="px-3 py-2 text-red-600 text-[11px] font-bold">Remover</button>
+                  </div>
+                ))}
+                {(!editingProduct.variations || editingProduct.variations.length === 0) && <p className="text-[10px] text-zinc-500">Este produto não possui variações. Clique em “Adicionar variação” para incluir opções.</p>}
               </div>
 
               <div>

@@ -51,9 +51,13 @@ export const ProductDetailView: React.FC<ProductDetailViewProps> = ({
     product?.thumbnail || (product?.images && product?.images[0]) || ''
   );
   const [quantity, setQuantity] = useState(1);
-  const [selectedVariation, setSelectedVariation] = useState<string>(
-    product?.variations?.[0]?.options[0] || ''
+  const [selectedVariations, setSelectedVariations] = useState<Record<string, string>>(() =>
+    Object.fromEntries((product?.variations || []).map((variation) => [variation.name, variation.options[0] || '']))
   );
+  const selectedVariation = Object.entries(selectedVariations)
+    .filter(([name, option]) => name && option)
+    .map(([name, option]) => `${name}: ${option}`)
+    .join(' • ');
   const [activeTab, setActiveTab] = useState<'desc' | 'specs' | 'reviews'>('desc');
 
   // Shipping simulation
@@ -75,6 +79,7 @@ export const ProductDetailView: React.FC<ProductDetailViewProps> = ({
   useEffect(() => {
     if (product) {
       setSelectedImage(product.thumbnail || (product.images && product.images[0]) || '');
+      setSelectedVariations(Object.fromEntries((product.variations || []).map((variation) => [variation.name, variation.options[0] || ''])));
       getProductReviews(product.id).then(setReviews);
     }
   }, [product?.id]);
@@ -280,25 +285,20 @@ export const ProductDetailView: React.FC<ProductDetailViewProps> = ({
 
           {/* Variations if available */}
           {product.variations && product.variations.length > 0 && (
-            <div className="space-y-3">
-              <h4 className="text-xs font-bold uppercase tracking-wider text-zinc-600">
-                Escolha a Opção:
-              </h4>
-              <div className="flex flex-wrap gap-2">
-                {product.variations[0].options.map((opt) => (
-                  <button
-                    key={opt}
-                    onClick={() => setSelectedVariation(opt)}
-                    className={`px-4 py-2 rounded-xl text-xs font-semibold border transition-all ${
-                      selectedVariation === opt
-                        ? 'border-[#E6007A] bg-[#E6007A] text-white shadow-xs'
-                        : 'border-zinc-200 bg-white text-zinc-700 hover:border-zinc-300'
-                    }`}
-                  >
-                    {opt}
-                  </button>
-                ))}
-              </div>
+            <div className="space-y-4 rounded-2xl border border-zinc-200 bg-zinc-50 p-4">
+              <h4 className="text-xs font-bold uppercase tracking-wider text-zinc-700">Escolha as opções do produto</h4>
+              {product.variations.map((variation) => (
+                <div key={variation.name} className="space-y-2">
+                  <p className="text-xs font-semibold text-zinc-700">{variation.name}</p>
+                  <div className="flex flex-wrap gap-2">
+                    {variation.options.map((opt) => (
+                      <button type="button" key={opt} onClick={() => setSelectedVariations((current) => ({ ...current, [variation.name]: opt }))} className={`px-4 py-2 rounded-xl text-xs font-semibold border transition-all ${selectedVariations[variation.name] === opt ? 'border-[#E6007A] bg-[#E6007A] text-white shadow-xs' : 'border-zinc-200 bg-white text-zinc-700 hover:border-zinc-300'}`}>
+                        {opt}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              ))}
             </div>
           )}
 

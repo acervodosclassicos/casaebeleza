@@ -59,6 +59,25 @@ export const AdminView: React.FC = () => {
   const [orders, setOrders] = useState<Order[]>([]);
   const [reviews, setReviews] = useState<Review[]>([]);
   const [loadingOrders, setLoadingOrders] = useState(false);
+  const [settingsDraft, setSettingsDraft] = useState<StoreSettings>(settings);
+  const [savingSettings, setSavingSettings] = useState(false);
+
+  useEffect(() => {
+    setSettingsDraft(settings);
+  }, [settings]);
+
+  const handleSaveStoreSettings = async () => {
+    setSavingSettings(true);
+    try {
+      await updateSettings({ ...settingsDraft });
+    } catch (error) {
+      console.error('Erro ao salvar configurações da loja:', error);
+      showToast('Não foi possível salvar. Verifique sua conexão e tente novamente.', 'error');
+    } finally {
+      setSavingSettings(false);
+    }
+  };
+
 
   // Product Editing / Creation modal
   const [editingProduct, setEditingProduct] = useState<Partial<Product> | null>(null);
@@ -821,91 +840,27 @@ export const AdminView: React.FC = () => {
       {/* TAB 6: CONFIGURAÇÕES */}
       {activeTab === 'configuracoes' && (
         <div className="max-w-2xl bg-white p-6 sm:p-8 rounded-3xl border border-zinc-200 shadow-xs space-y-6 text-xs">
-          <h2 className="text-lg font-black text-zinc-900 border-b border-zinc-100 pb-3">
-            Configurações Gerais da Loja
-          </h2>
-
+          <h2 className="text-lg font-black text-zinc-900 border-b border-zinc-100 pb-3">Configurações Gerais da Loja</h2>
           <div className="space-y-4">
-            <div>
-              <label className="block font-semibold text-zinc-700 mb-1">Nome da Loja</label>
-              <input
-                type="text"
-                defaultValue={settings.storeName}
-                onBlur={(e) => updateSettings({ storeName: e.target.value })}
-                className="w-full bg-zinc-50 border border-zinc-200 rounded-xl px-3 py-2 text-zinc-900"
-              />
-            </div>
-
+            <div><label className="block font-semibold text-zinc-700 mb-1">Nome da Loja</label><input type="text" value={settingsDraft.storeName || ''} onChange={(e) => setSettingsDraft(v => ({ ...v, storeName: e.target.value }))} className="w-full bg-zinc-50 border border-zinc-200 rounded-xl px-3 py-2 text-zinc-900" /></div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                <label className="block font-semibold text-zinc-700 mb-1">WhatsApp Comercial</label>
-                <input
-                  type="text"
-                  defaultValue={settings.whatsappNumber}
-                  onBlur={(e) => updateSettings({ whatsappNumber: e.target.value })}
-                  className="w-full bg-zinc-50 border border-zinc-200 rounded-xl px-3 py-2 text-zinc-900"
-                />
-              </div>
-
-              <div>
-                <label className="block font-semibold text-zinc-700 mb-1">E-mail de Atendimento</label>
-                <input
-                  type="email"
-                  defaultValue={settings.contactEmail}
-                  onBlur={(e) => updateSettings({ contactEmail: e.target.value })}
-                  className="w-full bg-zinc-50 border border-zinc-200 rounded-xl px-3 py-2 text-zinc-900"
-                />
-              </div>
+              <div><label className="block font-semibold text-zinc-700 mb-1">WhatsApp Comercial</label><input type="text" value={settingsDraft.whatsappNumber || ''} onChange={(e) => setSettingsDraft(v => ({ ...v, whatsappNumber: e.target.value }))} placeholder="5531999999999" className="w-full bg-zinc-50 border border-zinc-200 rounded-xl px-3 py-2 text-zinc-900" /></div>
+              <div><label className="block font-semibold text-zinc-700 mb-1">E-mail de Atendimento</label><input type="email" value={settingsDraft.contactEmail || ''} onChange={(e) => setSettingsDraft(v => ({ ...v, contactEmail: e.target.value }))} className="w-full bg-zinc-50 border border-zinc-200 rounded-xl px-3 py-2 text-zinc-900" /></div>
             </div>
-
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                <label className="block font-semibold text-zinc-700 mb-1">CNPJ</label>
-                <input type="text" defaultValue={settings.cnpj || ''} onBlur={(e) => updateSettings({ cnpj: e.target.value })} placeholder="00.000.000/0000-00" className="w-full bg-zinc-50 border border-zinc-200 rounded-xl px-3 py-2 text-zinc-900" />
-              </div>
-              <div>
-                <label className="block font-semibold text-zinc-700 mb-1">Endereço comercial</label>
-                <input type="text" defaultValue={settings.businessAddress || ''} onBlur={(e) => updateSettings({ businessAddress: e.target.value })} placeholder="Rua, número, bairro, cidade/UF, CEP" className="w-full bg-zinc-50 border border-zinc-200 rounded-xl px-3 py-2 text-zinc-900" />
-              </div>
+              <div><label className="block font-semibold text-zinc-700 mb-1">CNPJ</label><input type="text" value={settingsDraft.cnpj || ''} onChange={(e) => setSettingsDraft(v => ({ ...v, cnpj: e.target.value }))} placeholder="00.000.000/0000-00" className="w-full bg-zinc-50 border border-zinc-200 rounded-xl px-3 py-2 text-zinc-900" /></div>
+              <div><label className="block font-semibold text-zinc-700 mb-1">Endereço comercial</label><input type="text" value={settingsDraft.businessAddress || ''} onChange={(e) => setSettingsDraft(v => ({ ...v, businessAddress: e.target.value }))} placeholder="Rua, número, bairro, cidade/UF, CEP" className="w-full bg-zinc-50 border border-zinc-200 rounded-xl px-3 py-2 text-zinc-900" /></div>
             </div>
-
-            <div>
-              <label className="block font-semibold text-zinc-700 mb-1">
-                Texto do Banner Superior de Avisos
-              </label>
-              <input
-                type="text"
-                defaultValue={settings.announcementText}
-                onBlur={(e) => updateSettings({ announcementText: e.target.value })}
-                className="w-full bg-zinc-50 border border-zinc-200 rounded-xl px-3 py-2 text-zinc-900"
-              />
-            </div>
-
+            <div><label className="block font-semibold text-zinc-700 mb-1">Texto do Banner Superior de Avisos</label><input type="text" value={settingsDraft.announcementText || ''} onChange={(e) => setSettingsDraft(v => ({ ...v, announcementText: e.target.value }))} className="w-full bg-zinc-50 border border-zinc-200 rounded-xl px-3 py-2 text-zinc-900" /></div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                <label className="block font-semibold text-zinc-700 mb-1">
-                  Valor Mínimo para Frete Grátis (R$)
-                </label>
-                <input
-                  type="number"
-                  defaultValue={settings.freeShippingThreshold}
-                  onBlur={(e) => updateSettings({ freeShippingThreshold: Number(e.target.value) })}
-                  className="w-full bg-zinc-50 border border-zinc-200 rounded-xl px-3 py-2 text-zinc-900"
-                />
-              </div>
-
-              <div>
-                <label className="block font-semibold text-zinc-700 mb-1">
-                  Frete Padrão (R$)
-                </label>
-                <input
-                  type="number"
-                  defaultValue={settings.defaultShippingCost}
-                  onBlur={(e) => updateSettings({ defaultShippingCost: Number(e.target.value) })}
-                  className="w-full bg-zinc-50 border border-zinc-200 rounded-xl px-3 py-2 text-zinc-900"
-                />
-              </div>
+              <div><label className="block font-semibold text-zinc-700 mb-1">Valor Mínimo para Frete Grátis (R$)</label><input type="number" min="0" step="0.01" value={settingsDraft.freeShippingThreshold ?? 0} onChange={(e) => setSettingsDraft(v => ({ ...v, freeShippingThreshold: Number(e.target.value) }))} className="w-full bg-zinc-50 border border-zinc-200 rounded-xl px-3 py-2 text-zinc-900" /></div>
+              <div><label className="block font-semibold text-zinc-700 mb-1">Frete Padrão (R$)</label><input type="number" min="0" step="0.01" value={settingsDraft.defaultShippingCost ?? 0} onChange={(e) => setSettingsDraft(v => ({ ...v, defaultShippingCost: Number(e.target.value) }))} className="w-full bg-zinc-50 border border-zinc-200 rounded-xl px-3 py-2 text-zinc-900" /></div>
             </div>
+          </div>
+          <div className="flex justify-end border-t border-zinc-100 pt-4">
+            <button type="button" onClick={handleSaveStoreSettings} disabled={savingSettings} className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#E6007A] px-5 py-3 font-bold text-white shadow-sm transition hover:bg-[#c9006b] disabled:cursor-not-allowed disabled:opacity-60">
+              <Save className="h-4 w-4" />{savingSettings ? 'Salvando...' : 'Salvar configurações'}
+            </button>
           </div>
         </div>
       )}

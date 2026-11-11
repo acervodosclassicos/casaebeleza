@@ -43,6 +43,8 @@ export const CheckoutView: React.FC<CheckoutViewProps> = ({ onNavigate }) => {
   const [paymentMethod, setPaymentMethod] = useState<'link' | 'pix' | 'cartao'>('link');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
+  const [pixPayment, setPixPayment] = useState<{ orderId: string; copyPaste: string; qrBase64?: string | null } | null>(null);
+  const [checkingPix, setCheckingPix] = useState(false);
 
   // ViaCEP Auto lookup
   const handleCepChange = async (value: string) => {
@@ -67,6 +69,48 @@ export const CheckoutView: React.FC<CheckoutViewProps> = ({ onNavigate }) => {
       }
     }
   };
+
+  useEffect(() => {
+    if (!pixPayment) return;
+    let active = true;
+    const check = async () => {
+      if (!active) return;
+      setCheckingPix(true);
+      try {
+        const response = await fetch(`/api/pix/status?orderId=${encodeURIComponent(pixPayment.orderId)}`);
+        if (!response.ok) return;
+        const result = await response.json();
+        if (active && result.paid) {
+          setPixPayment(null);
+          onNavigate('pagamento-concluido', pixPayment.orderId);
+        }
+      } catch (error) {
+        console.warn('Não foi possível consultar o Pix agora:', error);
+      } finally {
+        if (active) setCheckingPix(false);
+      }
+    };
+    check();
+    const timer = window.setInterval(check, 5000);
+    return () => { active = false; window.clearInterval(timer); };
+  }, [pixPayment, onNavigate]);
+
+  if (pixPayment) {
+    return (
+      <div className="max-w-xl mx-auto px-4 py-12">
+        <div className="bg-white rounded-3xl border border-zinc-200 shadow-sm p-6 sm:p-8 text-center space-y-5">
+          <div className="w-14 h-14 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center mx-auto"><CheckCircle2 className="w-7 h-7" /></div>
+          <h1 className="text-2xl font-black text-zinc-900">Pague com Pix</h1>
+          <p className="text-sm text-zinc-500">Escaneie o QR Code ou copie o código Pix. Esta página verificará a confirmação automaticamente.</p>
+          {pixPayment.qrBase64 && <img className="w-56 h-56 object-contain mx-auto" alt="QR Code Pix" src={`data:image/png;base64,${pixPayment.qrBase64}`} />}
+          <button type="button" onClick={() => { navigator.clipboard.writeText(pixPayment.copyPaste); showToast('Código Pix copiado.', 'success'); }} className="w-full rounded-xl bg-[#E6007A] text-white font-bold py-3">Copiar código Pix</button>
+          <textarea readOnly value={pixPayment.copyPaste} className="w-full h-24 rounded-xl border border-zinc-200 bg-zinc-50 p-3 text-xs text-zinc-700" />
+          <p className="text-xs text-zinc-500">{checkingPix ? 'Verificando pagamento…' : 'Aguardando confirmação do pagamento.'}</p>
+          <p className="text-[11px] text-zinc-400">Não feche esta página até a confirmação. Pedido: {pixPayment.orderId}</p>
+        </div>
+      </div>
+    );
+  }
 
   if (cart.length === 0) {
     return (
@@ -115,48 +159,47 @@ export const CheckoutView: React.FC<CheckoutViewProps> = ({ onNavigate }) => {
         state,
       };
 
-      // Retrieve configured payment link from product or default
+      if (paymentMethod === 'pix') {
+        if (!/^\S+@\S+\.\S+$/.test(customerEmail.trim())) throw new Error('Informe um e-mail válido.');
+        if (customerCpf.replace(/\D/g, '').length !== 11) throw new Error('Informe um CPF válido com 11 números.');
+        const createdOrder = await createOrder({
+          customerName: customerName.trim(), customerEmail: customerEmail.trim(),
+          customerPhone: customerPhone.trim(), customerCpf: customerCpf.trim(),
+          shippingAddress, paymentMethod: 'PIX Nexum'
+        });
+        const pixResponse = await fetch('/api/pix/create', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ orderId: createdOrder.id })
+        });
+        const pixData = await pixResponse.json();
+        if (!pixResponse.ok) throw new Error(pixData.error || 'Não foi possível gerar o Pix.');
+        setPixPayment({ orderId: createdOrder.id, copyPaste: pixData.qr_code_text, qrBase64: pixData.qr_code_base64 });
+        showToast(`Pix do pedido #${createdOrder.orderNumber} gerado.`, 'success');
+        return;
+      }
+
       const configuredLinks = Array.from(new Set(
         cart.map((item) => item.externalPaymentLink?.trim()).filter((link): link is string => Boolean(link))
       ));
       if (configuredLinks.length !== 1 || cart.some((item) => !item.externalPaymentLink?.trim())) {
-        setErrorMsg(
-          cart.length > 1
-            ? 'Para concluir esta compra, todos os produtos precisam usar o mesmo link de pagamento. Configure um link válido em cada anúncio ou finalize um produto por vez.'
-            : 'Este produto ainda não possui um link de pagamento configurado. Entre em contato com a loja.'
-        );
+        setErrorMsg(cart.length > 1
+          ? 'Todos os produtos precisam usar o mesmo link de pagamento. Configure um link válido em cada anúncio ou finalize um produto por vez.'
+          : 'Este produto ainda não possui um link de pagamento configurado. Entre em contato com a loja.');
         setIsSubmitting(false);
         return;
       }
       const paymentLink = configuredLinks[0];
-      if (!/^https:\/\//i.test(paymentLink)) {
-        setErrorMsg('O link de pagamento configurado é inválido. Entre em contato com a loja.');
-        setIsSubmitting(false);
-        return;
-      }
-
+      if (!/^https:\/\//i.test(paymentLink)) throw new Error('O link de pagamento configurado é inválido.');
       const createdOrder = await createOrder({
-        customerName: customerName.trim(),
-        customerEmail: customerEmail.trim(),
-        customerPhone: customerPhone.trim(),
-        customerCpf: customerCpf.trim(),
-        shippingAddress,
-        paymentMethod:
-          paymentMethod === 'pix'
-            ? 'PIX Instantâneo'
-            : paymentMethod === 'cartao'
-            ? 'Cartão de Crédito'
-            : 'Link de Pagamento Externo',
-        paymentExternalLink: paymentLink,
+        customerName: customerName.trim(), customerEmail: customerEmail.trim(),
+        customerPhone: customerPhone.trim(), customerCpf: customerCpf.trim(), shippingAddress,
+        paymentMethod: 'Link de Pagamento Externo', paymentExternalLink: paymentLink
       });
-
       showToast(`Pedido #${createdOrder.orderNumber} registrado com sucesso!`, 'success');
-
-      // If external link configured, we direct customer to payment gateway or completion
       onNavigate('pagamento-concluido', createdOrder.id);
     } catch (err) {
       console.error('Checkout error:', err);
-      setErrorMsg('Houve um erro ao processar o pedido. Tente novamente.');
+      setErrorMsg(err instanceof Error ? err.message : 'Houve um erro ao processar o pedido. Tente novamente.');
     } finally {
       setIsSubmitting(false);
     }

@@ -174,43 +174,38 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     let isMounted = true;
     testFirestoreConnection();
 
-    const fetchInitialData = async () => {
-      try {
-        // Run independent reads concurrently so the catalog does not wait for
-        // banners/settings requests to finish one after another.
-        const [prodsSnap, bannerSnap, settingsDoc] = await Promise.all([
-          getDocs(collection(db, 'products')),
-          getDocs(collection(db, 'banners')),
-          getDoc(doc(db, 'settings', 'store_config')),
-        ]);
-        if (!isMounted) return;
-
-        if (!prodsSnap.empty) {
-          const list: Product[] = prodsSnap.docs.map((item) => ({
+    const fetchInitialData = () => {
+      // The catalog is the critical first render. Settings and banners load
+      // independently so a slow secondary collection cannot hold the page.
+      getDocs(collection(db, 'products'))
+        .then((snap) => {
+          if (!isMounted) return;
+          setProducts(snap.empty ? INITIAL_PRODUCTS : snap.docs.map((item) => ({
             id: item.id,
             ...(item.data() as Omit<Product, 'id'>),
-          }));
-          setProducts(list);
-        } else {
-          setProducts(INITIAL_PRODUCTS);
-        }
+          })));
+        })
+        .catch((err) => console.warn('Products could not be loaded:', err))
+        .finally(() => { if (isMounted) setLoading(false); });
 
-        if (!bannerSnap.empty) {
-          const bannerList: Banner[] = bannerSnap.docs.map((item) => ({
+      getDocs(collection(db, 'banners'))
+        .then((snap) => {
+          if (!isMounted || snap.empty) return;
+          const bannerList: Banner[] = snap.docs.map((item) => ({
             id: item.id,
             ...(item.data() as Omit<Banner, 'id'>),
           }));
           bannerList.sort((a, b) => (a.order || 0) - (b.order || 0));
           setBanners(bannerList);
-        }
-        if (settingsDoc.exists()) {
-          setSettings({ id: 'store_config', ...(settingsDoc.data() as Omit<StoreSettings, 'id'>) });
-        }
-      } catch (err) {
-        console.warn('Using local fallback catalog data:', err);
-      } finally {
-        if (isMounted) setLoading(false);
-      }
+        })
+        .catch((err) => console.warn('Banners could not be loaded:', err));
+
+      getDoc(doc(db, 'settings', 'store_config'))
+        .then((snap) => {
+          if (!isMounted || !snap.exists()) return;
+          setSettings({ ...INITIAL_SETTINGS, id: 'store_config', ...(snap.data() as Omit<StoreSettings, 'id'>) });
+        })
+        .catch((err) => console.warn('Store settings could not be loaded:', err));
     };
     fetchInitialData();
     return () => {
@@ -715,12 +710,13 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
   const updateSettings = async (newSettings: Partial<StoreSettings>) => {
     try {
-      const merged = { ...settings, ...newSettings };
-      await setDoc(doc(db, 'settings', 'store_config'), merged);
+      const merged = { ...settings, ...newSettings, id: 'store_config' };
+      await setDoc(doc(db, 'settings', 'store_config'), merged, { merge: true });
       setSettings(merged);
       showToast('Configurações da loja atualizadas com sucesso!', 'success');
     } catch (err) {
       handleFirestoreError(err, OperationType.WRITE, 'settings/store_config');
+      throw err;
     }
   };
 
